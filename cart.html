@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Cart</title>
+    <link rel="stylesheet" href="mystyle.css">
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="stays.html">Stays</a></li>
+                <li><a href="flights.html">Flights</a></li>
+                <li><a href="cars.html">Cars</a></li>
+                <li><a href="cruises.html">Cruises</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="cart.html" class="active">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Your Cart</h2>
+
+                <div id="cartContent">
+                    <!-- Cart items will be loaded here -->
+                </div>
+
+                <div id="passengerFormsSection" style="display: none;">
+                    <h3>Passenger Information</h3>
+                    <p style="color: #555; margin-bottom: 20px;">Please enter information for all passengers:</p>
+                    <div id="passengerForms"></div>
+                    <div class="button-group">
+                        <button onclick="bookItems()">Complete Booking</button>
+                        <button type="button" onclick="cancelBooking()" style="background: linear-gradient(135deg, #95a5a6, #7f8c8d);">Cancel</button>
+                    </div>
+                </div>
+
+                <div class="booking-confirmation" id="bookingConfirmation">
+                    <h3 style="color: #155724; text-align: center; font-size: 2em;">🎉 Booking Confirmed!</h3>
+                    <div id="confirmationDetails"></div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Simulated user ID (in real app, this would come from authentication)
+        let userId = 'USER' + Math.floor(Math.random() * 10000);
+
+        // Display current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Settings
+        document.getElementById('fontSize').addEventListener('change', function() {
+            document.getElementById('mainContent').style.fontSize = this.value + 'px';
+        });
+
+        document.getElementById('bgColor').addEventListener('change', function() {
+            document.getElementById('mainContent').style.backgroundColor = this.value;
+        });
+
+        // Load cart items from localStorage
+        function loadCart() {
+            const cart = getCart();
+            const cartContent = document.getElementById('cartContent');
+
+            if (cart.length === 0) {
+                cartContent.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <h3>Your cart is empty</h3>
+                        <p>Start exploring our travel deals and add items to your cart!</p>
+                        <div style="margin-top: 30px;">
+                            <a href="flights.html" class="btn">Browse Flights</a>
+                            <a href="stays.html" class="btn" style="margin-left: 15px;">Browse Hotels</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            // Display flights
+            if (cart.filter(item => item.type === 'flight').length > 0) {
+                html += '<div class="cart-section"><h3>✈️ Flights</h3>';
+                cart.filter(item => item.type === 'flight').forEach((item, index) => {
+                    html += generateFlightHTML(item, index);
+                });
+                html += '</div>';
+            }
+
+            // Display hotels
+            if (cart.filter(item => item.type === 'hotel').length > 0) {
+                html += '<div class="cart-section"><h3>🏨 Hotels</h3>';
+                cart.filter(item => item.type === 'hotel').forEach((item, index) => {
+                    html += generateHotelHTML(item, index);
+                });
+                html += '</div>';
+            }
+
+            // Display cars
+            if (cart.filter(item => item.type === 'car').length > 0) {
+                html += '<div class="cart-section"><h3>🚗 Car Rentals</h3>';
+                cart.filter(item => item.type === 'car').forEach((item, index) => {
+                    html += generateCarHTML(item, index);
+                });
+                html += '</div>';
+            }
+
+            // Display cruises
+            if (cart.filter(item => item.type === 'cruise').length > 0) {
+                html += '<div class="cart-section"><h3>🚢 Cruises</h3>';
+                cart.filter(item => item.type === 'cruise').forEach((item, index) => {
+                    html += generateCruiseHTML(item, index);
+                });
+                html += '</div>';
+            }
+
+            // Add checkout button
+            html += `
+                <div class="button-group">
+                    <button onclick="proceedToCheckout()">Proceed to Checkout</button>
+                    <button onclick="clearCart()" class="remove-btn">Clear Cart</button>
+                </div>
+            `;
+
+            cartContent.innerHTML = html;
+        }
+
+        function generateFlightHTML(item, index) {
+            const totalPassengers = item.adults + item.children + item.infants;
+            const adultPrice = item.price || 0;
+            const childPrice = adultPrice * 0.7;
+            const infantPrice = adultPrice * 0.1;
+            const totalPrice = (item.adults * adultPrice) + (item.children * childPrice) + (item.infants * infantPrice);
+
+            return `
+                <div class="cart-item">
+                    <h4>${item.tripType === 'roundtrip' ? 'Round Trip' : 'One Way'} Flight</h4>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Flight ID:</strong> ${item.flightId || 'N/A'}</div>
+                        <div class="item-detail"><strong>Origin:</strong> ${item.origin}</div>
+                        <div class="item-detail"><strong>Destination:</strong> ${item.destination}</div>
+                        <div class="item-detail"><strong>Departure:</strong> ${item.departDate}</div>
+                        ${item.returnDate ? `<div class="item-detail"><strong>Return:</strong> ${item.returnDate}</div>` : ''}
+                    </div>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Adults:</strong> ${item.adults}</div>
+                        <div class="item-detail"><strong>Children:</strong> ${item.children}</div>
+                        <div class="item-detail"><strong>Infants:</strong> ${item.infants}</div>
+                        <div class="item-detail"><strong>Total Passengers:</strong> ${totalPassengers}</div>
+                    </div>
+                    <div class="price-summary">
+                        <div class="price-row">
+                            <span>Adults (${item.adults} × $${adultPrice.toFixed(2)}):</span>
+                            <span>$${(item.adults * adultPrice).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Children (${item.children} × $${childPrice.toFixed(2)}):</span>
+                            <span>$${(item.children * childPrice).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Infants (${item.infants} × $${infantPrice.toFixed(2)}):</span>
+                            <span>$${(item.infants * infantPrice).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row total-price">
+                            <span>Total Price:</span>
+                            <span>$${totalPrice.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${index})" class="remove-btn" style="margin-top: 15px;">Remove</button>
+                </div>
+            `;
+        }
+
+        function generateHotelHTML(item, index) {
+            const checkIn = new Date(item.checkIn);
+            const checkOut = new Date(item.checkOut);
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            const pricePerNight = item.pricePerNight || 150;
+            const totalPrice = nights * item.rooms * pricePerNight;
+
+            return `
+                <div class="cart-item">
+                    <h4>${item.hotelName || 'Hotel'}</h4>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Hotel ID:</strong> ${item.hotelId || 'N/A'}</div>
+                        <div class="item-detail"><strong>City:</strong> ${item.city}</div>
+                        <div class="item-detail"><strong>Check-in:</strong> ${item.checkIn}</div>
+                        <div class="item-detail"><strong>Check-out:</strong> ${item.checkOut}</div>
+                        <div class="item-detail"><strong>Nights:</strong> ${nights}</div>
+                        <div class="item-detail"><strong>Rooms:</strong> ${item.rooms}</div>
+                    </div>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Adults:</strong> ${item.adults}</div>
+                        <div class="item-detail"><strong>Children:</strong> ${item.children}</div>
+                        <div class="item-detail"><strong>Infants:</strong> ${item.infants}</div>
+                    </div>
+                    <div class="price-summary">
+                        <div class="price-row">
+                            <span>Price per night:</span>
+                            <span>$${pricePerNight.toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>${nights} nights × ${item.rooms} room(s):</span>
+                            <span>$${(nights * item.rooms * pricePerNight).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row total-price">
+                            <span>Total Price:</span>
+                            <span>$${totalPrice.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${index})" class="remove-btn" style="margin-top: 15px;">Remove</button>
+                </div>
+            `;
+        }
+
+        function generateCarHTML(item, index) {
+            const pickUp = new Date(item.pickUpDate);
+            const dropOff = new Date(item.dropOffDate);
+            const days = Math.ceil((dropOff - pickUp) / (1000 * 60 * 60 * 24));
+            const pricePerDay = item.pricePerDay || 50;
+            const totalPrice = days * pricePerDay;
+
+            return `
+                <div class="cart-item">
+                    <h4>${item.carType.charAt(0).toUpperCase() + item.carType.slice(1)} Car</h4>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Car ID:</strong> ${item.carId || 'N/A'}</div>
+                        <div class="item-detail"><strong>City:</strong> ${item.city}</div>
+                        <div class="item-detail"><strong>Car Type:</strong> ${item.carType}</div>
+                        <div class="item-detail"><strong>Pick-up:</strong> ${item.pickUpDate}</div>
+                        <div class="item-detail"><strong>Drop-off:</strong> ${item.dropOffDate}</div>
+                        <div class="item-detail"><strong>Rental Days:</strong> ${days}</div>
+                    </div>
+                    <div class="price-summary">
+                        <div class="price-row">
+                            <span>Price per day:</span>
+                            <span>$${pricePerDay.toFixed(2)}</span>
+                        </div>
+                        <div class="price-row total-price">
+                            <span>Total Price (${days} days):</span>
+                            <span>$${totalPrice.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${index})" class="remove-btn" style="margin-top: 15px;">Remove</button>
+                </div>
+            `;
+        }
+
+        function generateCruiseHTML(item, index) {
+            const pricePerPerson = 500; // Base price
+            const totalPassengers = item.adults + item.children + item.infants;
+            const adultPrice = pricePerPerson;
+            const childPrice = adultPrice * 0.7;
+            const infantPrice = adultPrice * 0.1;
+            const totalPrice = (item.adults * adultPrice) + (item.children * childPrice) + (item.infants * infantPrice);
+
+            return `
+                <div class="cart-item">
+                    <h4>Cruise to ${item.destination}</h4>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Destination:</strong> ${item.destination}</div>
+                        <div class="item-detail"><strong>Departing:</strong> ${item.departStart} to ${item.departEnd}</div>
+                        <div class="item-detail"><strong>Duration:</strong> ${item.minDuration}-${item.maxDuration} days</div>
+                        <div class="item-detail"><strong>Rooms:</strong> ${item.rooms}</div>
+                    </div>
+                    <div class="item-details">
+                        <div class="item-detail"><strong>Adults:</strong> ${item.adults}</div>
+                        <div class="item-detail"><strong>Children:</strong> ${item.children}</div>
+                        <div class="item-detail"><strong>Infants:</strong> ${item.infants}</div>
+                    </div>
+                    <div class="price-summary">
+                        <div class="price-row">
+                            <span>Adults (${item.adults} × $${adultPrice.toFixed(2)}):</span>
+                            <span>$${(item.adults * adultPrice).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Children (${item.children} × $${childPrice.toFixed(2)}):</span>
+                            <span>$${(item.children * childPrice).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Infants (${item.infants} × $${infantPrice.toFixed(2)}):</span>
+                            <span>$${(item.infants * infantPrice).toFixed(2)}</span>
+                        </div>
+                        <div class="price-row total-price">
+                            <span>Total Price:</span>
+                            <span>$${totalPrice.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${index})" class="remove-btn" style="margin-top: 15px;">Remove</button>
+                </div>
+            `;
+        }
+
+        function getCart() {
+            const cart = localStorage.getItem('travelCart');
+            return cart ? JSON.parse(cart) : [];
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem('travelCart', JSON.stringify(cart));
+        }
+
+        function removeFromCart(index) {
+            if (confirm('Are you sure you want to remove this item from your cart?')) {
+                const cart = getCart();
+                cart.splice(index, 1);
+                saveCart(cart);
+                loadCart();
+            }
+        }
+
+        function clearCart() {
+            if (confirm('Are you sure you want to clear your entire cart?')) {
+                localStorage.removeItem('travelCart');
+                loadCart();
+            }
+        }
+
+        function proceedToCheckout() {
+            const cart = getCart();
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            // Show passenger forms for flights only
+            const flightItems = cart.filter(item => item.type === 'flight');
+            if (flightItems.length > 0) {
+                generatePassengerForms(flightItems);
+                document.getElementById('passengerFormsSection').style.display = 'block';
+                document.getElementById('cartContent').style.display = 'none';
+            } else {
+                // If no flights, book directly
+                bookItems();
+            }
+        }
+
+        function generatePassengerForms(flightItems) {
+            const formsContainer = document.getElementById('passengerForms');
+            let html = '';
+
+            flightItems.forEach((flight, flightIndex) => {
+                const totalPassengers = flight.adults + flight.children + flight.infants;
+                html += `<div class="passenger-form">
+                    <h4>Flight ${flightIndex + 1}: ${flight.origin} → ${flight.destination}</h4>`;
+
+                for (let i = 0; i < totalPassengers; i++) {
+                    let passengerType = 'Adult';
+                    if (i >= flight.adults && i < flight.adults + flight.children) {
+                        passengerType = 'Child';
+                    } else if (i >= flight.adults + flight.children) {
+                        passengerType = 'Infant';
+                    }
+
+                    html += `
+                        <div class="passenger-entry">
+                            <h5>Passenger ${i + 1} (${passengerType})</h5>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>First Name: *</label>
+                                    <input type="text" id="p${flightIndex}_${i}_fname" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name: *</label>
+                                    <input type="text" id="p${flightIndex}_${i}_lname" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Date of Birth: *</label>
+                                    <input type="date" id="p${flightIndex}_${i}_dob" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>SSN (XXX-XX-XXXX): *</label>
+                                    <input type="text" id="p${flightIndex}_${i}_ssn" placeholder="123-45-6789" maxlength="11" required>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+            });
+
+            formsContainer.innerHTML = html;
+
+            // Add SSN auto-formatting to all SSN inputs
+            flightItems.forEach((flight, flightIndex) => {
+                const totalPassengers = flight.adults + flight.children + flight.infants;
+                for (let i = 0; i < totalPassengers; i++) {
+                    const ssnInput = document.getElementById(`p${flightIndex}_${i}_ssn`);
+                    if (ssnInput) {
+                        ssnInput.addEventListener('input', function(e) {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value.length > 0) {
+                                if (value.length <= 3) {
+                                    e.target.value = value;
+                                } else if (value.length <= 5) {
+                                    e.target.value = value.substring(0, 3) + '-' + value.substring(3);
+                                } else {
+                                    e.target.value = value.substring(0, 3) + '-' + value.substring(3, 5) + '-' + value.substring(5, 9);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function cancelBooking() {
+            document.getElementById('passengerFormsSection').style.display = 'none';
+            document.getElementById('cartContent').style.display = 'block';
+        }
+
+        function bookItems() {
+            const cart = getCart();
+            const flightItems = cart.filter(item => item.type === 'flight');
+
+            // Validate passenger forms if there are flights
+            if (flightItems.length > 0) {
+                const isValid = validatePassengerForms(flightItems);
+                if (!isValid) {
+                    alert('Please fill out all passenger information correctly.');
+                    return;
+                }
+            }
+
+            const bookings = [];
+
+            cart.forEach((item, itemIndex) => {
+                const bookingNumber = 'BK' + Date.now() + Math.floor(Math.random() * 1000);
+                const booking = {
+                    userId: userId,
+                    bookingNumber: bookingNumber,
+                    bookingDate: new Date().toISOString(),
+                    ...item
+                };
+
+                // Add passenger info for flights
+                if (item.type === 'flight') {
+                    const flightIndex = cart.filter((i, idx) => idx < itemIndex && i.type === 'flight').length;
+                    booking.passengers = collectPassengerInfo(flightIndex, item);
+                }
+
+                bookings.push(booking);
+            });
+
+            // Save bookings
+            const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+            existingBookings.push(...bookings);
+            localStorage.setItem('bookings', JSON.stringify(existingBookings));
+
+            // Update available seats/rooms
+            updateAvailability(bookings);
+
+            // Show confirmation
+            displayBookingConfirmation(bookings);
+
+            // Clear cart
+            localStorage.removeItem('travelCart');
+        }
+
+        function validatePassengerForms(flightItems) {
+            let isValid = true;
+
+            flightItems.forEach((flight, flightIndex) => {
+                const totalPassengers = flight.adults + flight.children + flight.infants;
+                for (let i = 0; i < totalPassengers; i++) {
+                    const fname = document.getElementById(`p${flightIndex}_${i}_fname`);
+                    const lname = document.getElementById(`p${flightIndex}_${i}_lname`);
+                    const dob = document.getElementById(`p${flightIndex}_${i}_dob`);
+                    const ssn = document.getElementById(`p${flightIndex}_${i}_ssn`);
+
+                    if (!fname || !fname.value.trim() ||
+                        !lname || !lname.value.trim() ||
+                        !dob || !dob.value ||
+                        !ssn || !ssn.value.trim()) {
+                        isValid = false;
+                    }
+
+                    // Validate SSN format (XXX-XX-XXXX)
+                    if (ssn && ssn.value.trim()) {
+                        const ssnRegex = /^\d{3}-\d{2}-\d{4}$/;
+                        if (!ssnRegex.test(ssn.value.trim())) {
+                            isValid = false;
+                        }
+                    }
+                }
+            });
+
+            return isValid;
+        }
+
+        function collectPassengerInfo(flightIndex, flight) {
+            const passengers = [];
+            const totalPassengers = flight.adults + flight.children + flight.infants;
+
+            for (let i = 0; i < totalPassengers; i++) {
+                passengers.push({
+                    firstName: document.getElementById(`p${flightIndex}_${i}_fname`).value.trim(),
+                    lastName: document.getElementById(`p${flightIndex}_${i}_lname`).value.trim(),
+                    dateOfBirth: document.getElementById(`p${flightIndex}_${i}_dob`).value,
+                    ssn: document.getElementById(`p${flightIndex}_${i}_ssn`).value.trim()
+                });
+            }
+
+            return passengers;
+        }
+
+        function updateAvailability(bookings) {
+            // Update flight seats
+            const flightBookings = bookings.filter(b => b.type === 'flight');
+            if (flightBookings.length > 0) {
+                updateFlightSeats(flightBookings);
+            }
+
+            // Update hotel rooms
+            const hotelBookings = bookings.filter(b => b.type === 'hotel');
+            if (hotelBookings.length > 0) {
+                updateHotelRooms(hotelBookings);
+            }
+
+            // Update car availability
+            const carBookings = bookings.filter(b => b.type === 'car');
+            if (carBookings.length > 0) {
+                updateCarAvailability(carBookings);
+            }
+        }
+
+        async function updateFlightSeats(flightBookings) {
+            try {
+                // First, try to get from localStorage (which has any previous updates)
+                let flightsData = JSON.parse(localStorage.getItem('flightsData'));
+                
+                // If not in localStorage, load from JSON file
+                if (!flightsData) {
+                    const response = await fetch('flights.json');
+                    flightsData = await response.json();
+                }
+
+                flightBookings.forEach(booking => {
+                    const totalPassengers = booking.adults + booking.children + booking.infants;
+
+                    if (booking.tripType === 'roundtrip') {
+                        // Update departing flight
+                        const departFlight = flightsData.flights.find(f => f.flightId === booking.departingFlight.flightId);
+                        if (departFlight) {
+                            departFlight.availableSeats -= totalPassengers;
+                            console.log(`Updated ${departFlight.flightId}: ${departFlight.availableSeats} seats remaining`);
+                        }
+
+                        // Update returning flight
+                        const returnFlight = flightsData.flights.find(f => f.flightId === booking.returningFlight.flightId);
+                        if (returnFlight) {
+                            returnFlight.availableSeats -= totalPassengers;
+                            console.log(`Updated ${returnFlight.flightId}: ${returnFlight.availableSeats} seats remaining`);
+                        }
+                    } else {
+                        // Update one-way flight
+                        const flight = flightsData.flights.find(f => f.flightId === booking.flightId);
+                        if (flight) {
+                            flight.availableSeats -= totalPassengers;
+                            console.log(`Updated ${flight.flightId}: ${flight.availableSeats} seats remaining`);
+                        }
+                    }
+                });
+
+                // Store updated flights data back in localStorage
+                localStorage.setItem('flightsData', JSON.stringify(flightsData));
+                console.log('Flight seats updated and saved to localStorage');
+            } catch (error) {
+                console.error('Error updating flight seats:', error);
+            }
+        }
+        
+        async function updateHotelRooms(hotelBookings) {
+            console.log('Starting updateHotelRooms...');
+            console.log('Number of hotel bookings:', hotelBookings.length);
+            
+            try {
+                // First, try to get from localStorage
+                let hotelsData = JSON.parse(localStorage.getItem('hotelsData'));
+                
+                console.log('hotelsData from localStorage:', hotelsData ? 'FOUND' : 'NOT FOUND');
+                
+                // If not in localStorage, load from XML file
+                if (!hotelsData) {
+                    console.log('Loading from hotels.xml...');
+                    const response = await fetch('hotels.xml');
+                    const xmlText = await response.text();
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    // Parse XML to JSON
+                    const hotels = [];
+                    const hotelNodes = xmlDoc.getElementsByTagName('hotel');
+                    
+                    for (let hotel of hotelNodes) {
+                        hotels.push({
+                            hotelId: hotel.getElementsByTagName('hotel-id')[0]?.textContent,
+                            hotelName: hotel.getElementsByTagName('hotel-name')[0]?.textContent,
+                            city: hotel.getElementsByTagName('city')[0]?.textContent,
+                            availableRooms: parseInt(hotel.getElementsByTagName('available-rooms')[0]?.textContent),
+                            date: hotel.getElementsByTagName('date')[0]?.textContent,
+                            pricePerNight: parseFloat(hotel.getElementsByTagName('price-per-night')[0]?.textContent)
+                        });
+                    }
+                    
+                    hotelsData = { hotels: hotels };
+                    console.log('Loaded from XML, hotels count:', hotels.length);
+                } else {
+                    console.log('Using localStorage data, hotels count:', hotelsData.hotels.length);
+                }
+
+                hotelBookings.forEach((booking, index) => {
+                    console.log(`Processing hotel booking ${index + 1}:`, booking);
+                    
+                    // Find the hotel and decrease rooms
+                    const hotel = hotelsData.hotels.find(h => h.hotelId === booking.hotelId);
+                    console.log('Found hotel:', hotel);
+                    
+                    if (hotel) {
+                        const oldRooms = hotel.availableRooms;
+                        hotel.availableRooms -= booking.rooms;
+                        console.log(`Updated ${hotel.hotelId}: ${oldRooms} → ${hotel.availableRooms} rooms`);
+                    } else {
+                        console.log('Hotel not found! HotelId:', booking.hotelId);
+                    }
+                });
+
+                // Store updated hotels data back in localStorage
+                localStorage.setItem('hotelsData', JSON.stringify(hotelsData));
+                console.log('Hotel rooms updated and saved to localStorage');
+                
+            } catch (error) {
+                console.error('Error updating hotel rooms:', error);
+                console.error('Error details:', error.message);
+            }
+        }
+
+        async function updateCarAvailability(carBookings) {
+            console.log('🔵 Starting updateCarAvailability...');
+            console.log('🔵 Number of car bookings:', carBookings.length);
+            
+            try {
+                // First, try to get from localStorage
+                let carsData = JSON.parse(localStorage.getItem('carsData'));
+                
+                console.log('carsData from localStorage:', carsData ? 'FOUND' : 'NOT FOUND');
+                
+                // If not in localStorage, load from XML file
+                if (!carsData) {
+                    console.log('Loading from cars.xml...');
+                    const response = await fetch('cars.xml');
+                    const xmlText = await response.text();
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    // Parse XML to JSON
+                    const cars = [];
+                    const carNodes = xmlDoc.getElementsByTagName('car');
+                    
+                    for (let car of carNodes) {
+                        cars.push({
+                            carId: car.getElementsByTagName('car-id')[0]?.textContent,
+                            city: car.getElementsByTagName('city')[0]?.textContent,
+                            type: car.getElementsByTagName('type')[0]?.textContent,
+                            checkInDate: car.getElementsByTagName('check-in-date')[0]?.textContent,
+                            checkOutDate: car.getElementsByTagName('check-out-date')[0]?.textContent,
+                            pricePerDay: parseFloat(car.getElementsByTagName('price-per-day')[0]?.textContent),
+                            available: true // Add availability tracking
+                        });
+                    }
+                    
+                    carsData = { cars: cars };
+                    console.log('Loaded from XML, cars count:', cars.length);
+                } else {
+                    console.log('Using localStorage data, cars count:', carsData.cars.length);
+                }
+
+                carBookings.forEach((booking, index) => {
+                    console.log(`Processing car booking ${index + 1}:`, booking);
+                    
+                    // Find the car and mark as unavailable
+                    const car = carsData.cars.find(c => c.carId === booking.carId);
+                    console.log('Found car:', car);
+                    
+                    if (car) {
+                        car.available = false;
+                        car.bookedDates = { from: booking.pickUpDate, to: booking.dropOffDate };
+                        console.log(`Updated ${car.carId}: marked as unavailable for ${booking.pickUpDate} to ${booking.dropOffDate}`);
+                    } else {
+                        console.log('Car not found! CarId:', booking.carId);
+                    }
+                });
+
+                // Store updated cars data back in localStorage
+                localStorage.setItem('carsData', JSON.stringify(carsData));
+                console.log('Car availability updated and saved to localStorage');
+                
+            } catch (error) {
+                console.error('Error updating car availability:', error);
+                console.error('Error details:', error.message);
+            }
+        }
+
+        function displayBookingConfirmation(bookings) {
+            let html = '';
+            
+            bookings.forEach(booking => {
+                html += `
+                    <div class="booking-number">
+                        📋 Booking Number: ${booking.bookingNumber}
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4>${booking.type.charAt(0).toUpperCase() + booking.type.slice(1)}</h4>
+                        <p><strong>User ID:</strong> ${booking.userId}</p>
+                        ${booking.type === 'flight' ? `
+                            <p><strong>Route:</strong> ${booking.origin} → ${booking.destination}</p>
+                            <p><strong>Date:</strong> ${booking.departDate}</p>
+                        ` : ''}
+                        ${booking.type === 'hotel' ? `
+                            <p><strong>Hotel:</strong> ${booking.hotelName || 'N/A'}</p>
+                            <p><strong>City:</strong> ${booking.city}</p>
+                            <p><strong>Dates:</strong> ${booking.checkIn} to ${booking.checkOut}</p>
+                        ` : ''}
+                        ${booking.type === 'car' ? `
+                            <p><strong>Car Type:</strong> ${booking.carType}</p>
+                            <p><strong>City:</strong> ${booking.city}</p>
+                            <p><strong>Dates:</strong> ${booking.pickUpDate} to ${booking.dropOffDate}</p>
+                        ` : ''}
+                        ${booking.type === 'cruise' ? `
+                            <p><strong>Destination:</strong> ${booking.destination}</p>
+                            <p><strong>Duration:</strong> ${booking.minDuration}-${booking.maxDuration} days</p>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            html += `
+                <div style="text-align: center; margin-top: 30px;">
+                    <p style="font-size: 1.1em; color: #155724;">Thank you for booking with Travel Deals!</p>
+                    <p>A confirmation email has been sent to your registered email address.</p>
+                    <button onclick="window.location.href='index.html'" style="margin-top: 20px;">Return to Home</button>
+                </div>
+            `;
+
+            document.getElementById('confirmationDetails').innerHTML = html;
+            document.getElementById('bookingConfirmation').classList.add('show');
+            document.getElementById('passengerFormsSection').style.display = 'none';
+            document.getElementById('cartContent').style.display = 'none';
+        }
+
+        // Load cart on page load
+        loadCart();
+    </script>
+</body>
+</html>

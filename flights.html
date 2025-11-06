@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Flights</title>
+    <link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="stays.html">Stays</a></li>
+                <li><a href="flights.html" class="active">Flights</a></li>
+                <li><a href="cars.html">Cars</a></li>
+                <li><a href="cruises.html">Cruises</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="cart.html">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Book Your Flight</h2>
+
+                <div class="trip-type">
+                    <label><input type="radio" name="tripType" value="oneway" checked> One Way</label>
+                    <label><input type="radio" name="tripType" value="roundtrip"> Round Trip</label>
+                </div>
+
+                <form id="flightForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="origin">Origin (TX or CA city): *</label>
+                            <input type="text" id="origin" name="origin" placeholder="e.g., Dallas, Austin">
+                            <span class="error" id="originError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="destination">Destination (TX or CA city): *</label>
+                            <input type="text" id="destination" name="destination" placeholder="e.g., Los Angeles, Houston">
+                            <span class="error" id="destinationError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departDate">Departure Date: *</label>
+                            <input type="date" id="departDate" name="departDate">
+                            <span class="error" id="departDateError"></span>
+                        </div>
+
+                        <div class="form-group" id="returnDateGroup" style="display: none;">
+                            <label for="returnDate">Return Date: *</label>
+                            <input type="date" id="returnDate" name="returnDate">
+                            <span class="error" id="returnDateError"></span>
+                        </div>
+                    </div>
+
+                    <div class="passenger-icon" id="passengerIcon" title="Click to enter passenger details">
+                        👥 Passengers
+                    </div>
+
+                    <div id="passengerForm" class="hidden">
+                        <h3>Passenger Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adults">Adults: *</label>
+                                <input type="number" id="adults" name="adults" min="0" max="4" value="1">
+                                <span class="error" id="adultsError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="children">Children: *</label>
+                                <input type="number" id="children" name="children" min="0" max="4" value="0">
+                                <span class="error" id="childrenError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="infants">Infants: *</label>
+                                <input type="number" id="infants" name="infants" min="0" max="4" value="0">
+                                <span class="error" id="infantsError"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit">Search Flights</button>
+                        <button type="reset">Reset</button>
+                    </div>
+                </form>
+
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <h3 id="resultsTitle">Available Flights</h3>
+                    <div id="flightsContainer"></div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Store for flights data loaded from JSON
+        let flightsData = { flights: [] };
+        
+        // Store for selected flights
+        let selectedDepartingFlight = null;
+        let selectedReturningFlight = null;
+        let currentSearchParams = null;
+
+        // Load flights data from JSON file or localStorage
+        async function loadFlightsData() {
+            try {
+                // First check if we have updated data in localStorage
+                const storedData = localStorage.getItem('flightsData');
+                
+                if (storedData) {
+                    flightsData = JSON.parse(storedData);
+                    console.log('Flights loaded from localStorage (with booking updates):', flightsData.flights.length, 'flights');
+                } else {
+                    // If not in localStorage, load from JSON file
+                    const response = await fetch('flights.json');
+                    if (!response.ok) {
+                        throw new Error('Failed to load flights data');
+                    }
+                    flightsData = await response.json();
+                    
+                    // Save to localStorage for future use
+                    localStorage.setItem('flightsData', JSON.stringify(flightsData));
+                    console.log('Flights loaded from JSON file:', flightsData.flights.length, 'flights');
+                }
+            } catch (error) {
+                console.error('Error loading flights data:', error);
+                alert('Error: Could not load flights data. Please make sure flights.json exists in the same directory.');
+            }
+        }
+
+        // Load flights data when page loads
+        loadFlightsData();
+
+        // Texas and California cities
+        const validCities = [
+            'dallas', 'houston', 'austin', 'san antonio', 'fort worth', 'el paso',
+            'arlington', 'corpus christi', 'plano', 'laredo', 'lubbock', 'irving',
+            'los angeles', 'san diego', 'san jose', 'san francisco', 'fresno',
+            'sacramento', 'long beach', 'oakland', 'bakersfield', 'anaheim',
+            'santa ana', 'riverside', 'stockton', 'irvine'
+        ];
+
+        const cityPattern = new RegExp(`^(${validCities.join('|')})$`, 'i');
+
+        // Display current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Settings
+        document.getElementById('fontSize').addEventListener('change', function() {
+            document.getElementById('mainContent').style.fontSize = this.value + 'px';
+        });
+
+        document.getElementById('bgColor').addEventListener('change', function() {
+            document.getElementById('mainContent').style.backgroundColor = this.value;
+        });
+
+        // Trip type toggle
+        document.querySelectorAll('input[name="tripType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const returnDateGroup = document.getElementById('returnDateGroup');
+                if (this.value === 'roundtrip') {
+                    returnDateGroup.style.display = 'block';
+                } else {
+                    returnDateGroup.style.display = 'none';
+                }
+                selectedDepartingFlight = null;
+                selectedReturningFlight = null;
+            });
+        });
+
+        // Passenger icon toggle
+        document.getElementById('passengerIcon').addEventListener('click', function() {
+            const passengerForm = document.getElementById('passengerForm');
+            passengerForm.classList.toggle('hidden');
+        });
+
+        // Helper function to validate date range
+        function isValidDateRange(dateStr) {
+            const date = new Date(dateStr);
+            const minDate = new Date('2024-09-01');
+            const maxDate = new Date('2024-12-01');
+            return date >= minDate && date <= maxDate;
+        }
+
+        // Form validation
+        document.getElementById('flightForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            const errors = document.querySelectorAll('.error');
+            errors.forEach(error => {
+                error.textContent = '';
+                error.classList.remove('show');
+            });
+
+            let isValid = true;
+
+            // Get form values
+            const tripType = document.querySelector('input[name="tripType"]:checked').value;
+            const origin = document.getElementById('origin').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const departDate = document.getElementById('departDate').value;
+            const returnDate = document.getElementById('returnDate').value;
+            const adults = parseInt(document.getElementById('adults').value);
+            const children = parseInt(document.getElementById('children').value);
+            const infants = parseInt(document.getElementById('infants').value);
+
+            // Validate origin
+            if (!origin) {
+                showError('originError', 'Origin is required');
+                isValid = false;
+            } else if (!cityPattern.test(origin.toLowerCase())) {
+                showError('originError', 'Origin must be a city in Texas or California');
+                isValid = false;
+            }
+
+            // Validate destination
+            if (!destination) {
+                showError('destinationError', 'Destination is required');
+                isValid = false;
+            } else if (!cityPattern.test(destination.toLowerCase())) {
+                showError('destinationError', 'Destination must be a city in Texas or California');
+                isValid = false;
+            }
+
+            // Validate departure date
+            const dateRegex = /^2024-(09|10|11|12)-([0-2][0-9]|3[01])$/;
+            if (!departDate) {
+                showError('departDateError', 'Departure date is required');
+                isValid = false;
+            } else if (!dateRegex.test(departDate)) {
+                showError('departDateError', 'Departure date must be in 2024 between Sep-Dec');
+                isValid = false;
+            } else if (!isValidDateRange(departDate)) {
+                showError('departDateError', 'Departure date must be between Sep 1, 2024 and Dec 1, 2024');
+                isValid = false;
+            }
+
+            // Validate return date for round trip
+            if (tripType === 'roundtrip') {
+                if (!returnDate) {
+                    showError('returnDateError', 'Return date is required for round trip');
+                    isValid = false;
+                } else if (!dateRegex.test(returnDate)) {
+                    showError('returnDateError', 'Return date must be in 2024 between Sep-Dec');
+                    isValid = false;
+                } else if (!isValidDateRange(returnDate)) {
+                    showError('returnDateError', 'Return date must be between Sep 1, 2024 and Dec 1, 2024');
+                    isValid = false;
+                } else if (new Date(returnDate) <= new Date(departDate)) {
+                    showError('returnDateError', 'Return date must be after departure date');
+                    isValid = false;
+                }
+            }
+
+            // Validate passengers
+            if (adults > 4) {
+                showError('adultsError', 'Maximum 4 adults allowed');
+                isValid = false;
+            }
+            if (children > 4) {
+                showError('childrenError', 'Maximum 4 children allowed');
+                isValid = false;
+            }
+            if (infants > 4) {
+                showError('infantsError', 'Maximum 4 infants allowed');
+                isValid = false;
+            }
+
+            // If all validations pass, search for flights
+            if (isValid) {
+                currentSearchParams = { tripType, origin, destination, departDate, returnDate, adults, children, infants };
+                searchFlights(tripType, origin, destination, departDate, returnDate, adults, children, infants);
+            }
+        });
+
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        // Search for available flights
+        function searchFlights(tripType, origin, destination, departDate, returnDate, adults, children, infants) {
+            const totalPassengers = adults + children + infants;
+            
+            if (flightsData.flights.length === 0) {
+                document.getElementById('searchResults').style.display = 'block';
+                document.getElementById('flightsContainer').innerHTML = '<div class="error-message">❌ No flights data available. Please ensure flights.json is loaded.</div>';
+                return;
+            }
+            
+            // Search for departing flights
+            let departingFlights = findFlights(origin, destination, departDate, totalPassengers);
+            
+            // If no exact match, search ±3 days
+            if (departingFlights.length === 0) {
+                departingFlights = findFlightsWithinRange(origin, destination, departDate, totalPassengers, 3);
+            }
+
+            if (tripType === 'oneway') {
+                displayFlights(departingFlights, 'oneway', adults, children, infants);
+            } else {
+                // Search for returning flights
+                let returningFlights = findFlights(destination, origin, returnDate, totalPassengers);
+                
+                if (returningFlights.length === 0) {
+                    returningFlights = findFlightsWithinRange(destination, origin, returnDate, totalPassengers, 3);
+                }
+
+                displayFlights(departingFlights, 'departing', adults, children, infants, returningFlights);
+            }
+        }
+
+        // Find flights matching criteria
+        function findFlights(origin, destination, date, passengers) {
+            return flightsData.flights.filter(flight => 
+                flight.origin.toLowerCase() === origin.toLowerCase() &&
+                flight.destination.toLowerCase() === destination.toLowerCase() &&
+                flight.departureDate === date &&
+                flight.availableSeats >= passengers
+            );
+        }
+
+        // Find flights within date range (±days)
+        function findFlightsWithinRange(origin, destination, targetDate, passengers, days) {
+            const target = new Date(targetDate);
+            const results = [];
+
+            for (let i = -days; i <= days; i++) {
+                const checkDate = new Date(target);
+                checkDate.setDate(checkDate.getDate() + i);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                const flights = findFlights(origin, destination, dateStr, passengers);
+                results.push(...flights);
+            }
+
+            return results;
+        }
+
+        // Display flight results
+        function displayFlights(departingFlights, type, adults, children, infants, returningFlights = null) {
+            const searchResults = document.getElementById('searchResults');
+            const flightsContainer = document.getElementById('flightsContainer');
+            const resultsTitle = document.getElementById('resultsTitle');
+
+            let html = '';
+            
+            // Check if we're showing nearby dates
+            const showingNearbyDeparting = departingFlights.length > 0 && 
+                                        !departingFlights.some(f => f.departureDate === currentSearchParams.departDate);
+            const showingNearbyReturning = returningFlights && returningFlights.length > 0 && 
+                                        !returningFlights.some(f => f.departureDate === currentSearchParams.returnDate);
+
+            if (type === 'oneway') {
+                resultsTitle.textContent = `Available Flights (${departingFlights.length} found)`;
+                
+                // Add nearby dates message
+                if (showingNearbyDeparting) {
+                    html += `
+                        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #856404;">
+                            No flights found on exact date ${currentSearchParams.departDate}. 
+                            Showing flights within 3 days before and after.
+                        </div>
+                    `;
+                }
+                
+                if (departingFlights.length === 0) {
+                    html += '<div class="no-flights">No flights found matching your criteria within ±3 days. Please try different dates or cities.</div>';
+                } else {
+                    departingFlights.forEach(flight => {
+                        html += createFlightCard(flight, 'oneway', adults, children, infants);
+                    });
+                }
+            } else {
+                // Add nearby dates message for departing
+                if (showingNearbyDeparting) {
+                    html += `
+                        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #856404;">
+                            No departing flights found on exact date ${currentSearchParams.departDate}. 
+                            Showing flights within 3 days before and after.
+                        </div>
+                    `;
+                }
+                
+                // Round trip - show both departing and returning
+                html += '<h3 style="color: #2c3e50; margin-bottom: 20px;">Departing Flights (' + departingFlights.length + ' found)</h3>';
+                
+                if (departingFlights.length === 0) {
+                    html += '<div class="no-flights">No departing flights found within ±3 days.</div>';
+                } else {
+                    departingFlights.forEach(flight => {
+                        html += createFlightCard(flight, 'departing', adults, children, infants);
+                    });
+                }
+
+                // Add nearby dates message for returning
+                if (showingNearbyReturning) {
+                    html += `
+                        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; color: #856404;">
+                            No returning flights found on exact date ${currentSearchParams.returnDate}. 
+                            Showing flights within 3 days before and after.
+                        </div>
+                    `;
+                }
+
+                html += '<h3 style="color: #2c3e50; margin: 30px 0 20px 0;">Returning Flights (' + (returningFlights ? returningFlights.length : 0) + ' found)</h3>';
+                
+                if (!returningFlights || returningFlights.length === 0) {
+                    html += '<div class="no-flights">No returning flights found within ±3 days.</div>';
+                } else {
+                    returningFlights.forEach(flight => {
+                        html += createFlightCard(flight, 'returning', adults, children, infants);
+                    });
+                }
+
+                // Add button to add to cart if both selected
+                html += `
+                    <div id="addToCartSection" style="display: none; text-align: center; margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 12px;">
+                        <p style="color: #2e7d32; font-size: 1.1em; margin-bottom: 15px;">✓ Both flights selected!</p>
+                        <button onclick="addRoundTripToCart()" style="font-size: 1.2em; padding: 15px 40px;">
+                            Add Round Trip to Cart
+                        </button>
+                    </div>
+                `;
+            }
+
+            flightsContainer.innerHTML = html;
+            searchResults.style.display = 'block';
+            
+            // Scroll to results
+            searchResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Create flight card HTML
+        function createFlightCard(flight, type, adults, children, infants) {
+            const adultPrice = flight.price;
+            const childPrice = adultPrice * 0.7;
+            const infantPrice = adultPrice * 0.1;
+            const totalPrice = (adults * adultPrice) + (children * childPrice) + (infants * infantPrice);
+
+            const isSelected = (type === 'departing' && selectedDepartingFlight?.flightId === flight.flightId) ||
+                             (type === 'returning' && selectedReturningFlight?.flightId === flight.flightId);
+
+            return `
+                <div class="flight-card ${isSelected ? 'selected-flight' : ''}" id="flight-${type}-${flight.flightId}">
+                    <div class="flight-header">
+                        <div class="flight-id">${flight.flightId}</div>
+                        ${type !== 'oneway' ? `<span class="flight-type-badge">${type === 'departing' ? 'Departing' : 'Returning'}</span>` : ''}
+                        ${isSelected ? '<span class="selected-badge">✓ Selected</span>' : ''}
+                    </div>
+                    
+                    <div class="flight-route">
+                        <span class="city">${flight.origin}</span>
+                        <span class="arrow">→</span>
+                        <span class="city">${flight.destination}</span>
+                    </div>
+
+                    <div class="flight-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Departure Date</div>
+                            <div class="detail-value">${flight.departureDate}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Arrival Date</div>
+                            <div class="detail-value">${flight.arrivalDate}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Departure Time</div>
+                            <div class="detail-value">${flight.departureTime}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Arrival Time</div>
+                            <div class="detail-value">${flight.arrivalTime}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Available Seats</div>
+                            <div class="detail-value seats-available">${flight.availableSeats}</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <div style="color: #7f8c8d; font-size: 0.9em;">Total for ${adults + children + infants} passenger(s)</div>
+                            <div class="price-tag">$${totalPrice.toFixed(2)}</div>
+                            <div style="font-size: 0.85em; color: #95a5a6; margin-top: 5px;">
+                                Adults: $${(adults * adultPrice).toFixed(2)} | 
+                                Children: $${(children * childPrice).toFixed(2)} | 
+                                Infants: $${(infants * infantPrice).toFixed(2)}
+                            </div>
+                        </div>
+                        <button class="select-flight-btn" onclick='selectFlight(${JSON.stringify(flight).replace(/'/g, "&#39;")}, "${type}", ${adults}, ${children}, ${infants})'>
+                            ${type === 'oneway' ? 'Add to Cart' : 'Select Flight'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Select flight
+        function selectFlight(flight, type, adults, children, infants) {
+            if (type === 'oneway') {
+                // Add directly to cart for one-way
+                addToCart({
+                    type: 'flight',
+                    tripType: 'oneway',
+                    flightId: flight.flightId,
+                    origin: flight.origin,
+                    destination: flight.destination,
+                    departDate: flight.departureDate,
+                    departureTime: flight.departureTime,
+                    arrivalTime: flight.arrivalTime,
+                    adults: adults,
+                    children: children,
+                    infants: infants,
+                    price: flight.price
+                });
+            } else if (type === 'departing') {
+                selectedDepartingFlight = { ...flight, adults, children, infants };
+                // Re-render to show selection
+                searchFlights(
+                    currentSearchParams.tripType,
+                    currentSearchParams.origin,
+                    currentSearchParams.destination,
+                    currentSearchParams.departDate,
+                    currentSearchParams.returnDate,
+                    currentSearchParams.adults,
+                    currentSearchParams.children,
+                    currentSearchParams.infants
+                );
+            } else if (type === 'returning') {
+                selectedReturningFlight = { ...flight, adults, children, infants };
+                // Re-render to show selection
+                searchFlights(
+                    currentSearchParams.tripType,
+                    currentSearchParams.origin,
+                    currentSearchParams.destination,
+                    currentSearchParams.departDate,
+                    currentSearchParams.returnDate,
+                    currentSearchParams.adults,
+                    currentSearchParams.children,
+                    currentSearchParams.infants
+                );
+            }
+
+            // Show add to cart button if both flights selected
+            if (selectedDepartingFlight && selectedReturningFlight) {
+                document.getElementById('addToCartSection').style.display = 'block';
+            }
+        }
+
+        // Add round trip to cart
+        function addRoundTripToCart() {
+            if (!selectedDepartingFlight || !selectedReturningFlight) {
+                alert('Please select both departing and returning flights');
+                return;
+            }
+
+            addToCart({
+                type: 'flight',
+                tripType: 'roundtrip',
+                departingFlight: {
+                    flightId: selectedDepartingFlight.flightId,
+                    origin: selectedDepartingFlight.origin,
+                    destination: selectedDepartingFlight.destination,
+                    departDate: selectedDepartingFlight.departureDate,
+                    departureTime: selectedDepartingFlight.departureTime,
+                    arrivalTime: selectedDepartingFlight.arrivalTime
+                },
+                returningFlight: {
+                    flightId: selectedReturningFlight.flightId,
+                    origin: selectedReturningFlight.origin,
+                    destination: selectedReturningFlight.destination,
+                    departDate: selectedReturningFlight.departureDate,
+                    departureTime: selectedReturningFlight.departureTime,
+                    arrivalTime: selectedReturningFlight.arrivalTime
+                },
+                origin: selectedDepartingFlight.origin,
+                destination: selectedDepartingFlight.destination,
+                departDate: selectedDepartingFlight.departureDate,
+                returnDate: selectedReturningFlight.departureDate,
+                adults: selectedDepartingFlight.adults,
+                children: selectedDepartingFlight.children,
+                infants: selectedDepartingFlight.infants,
+                price: selectedDepartingFlight.price + selectedReturningFlight.price
+            });
+        }
+
+    </script>
+    <script src="/add2cart.js"></script>
+</body>
+</html>

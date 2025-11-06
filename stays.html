@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Stays</title>
+    <link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="stays.html" class="active">Stays</a></li>
+                <li><a href="flights.html">Flights</a></li>
+                <li><a href="cars.html">Cars</a></li>
+                <li><a href="cruises.html">Cruises</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="cart.html">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Book Your Stay</h2>
+
+                <form id="staysForm">
+                    <div class="form-group">
+                        <label for="city">City (TX or CA): *</label>
+                        <input type="text" id="city" name="city" placeholder="e.g., Dallas, Los Angeles">
+                        <span class="error" id="cityError"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="checkIn">Check-in Date: *</label>
+                            <input type="date" id="checkIn" name="checkIn">
+                            <span class="error" id="checkInError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="checkOut">Check-out Date: *</label>
+                            <input type="date" id="checkOut" name="checkOut">
+                            <span class="error" id="checkOutError"></span>
+                        </div>
+                    </div>
+
+                    <h3>Number of Guests</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="adults">Adults: *</label>
+                            <input type="number" id="adults" name="adults" min="0" value="1">
+                            <span class="error" id="adultsError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="children">Children: *</label>
+                            <input type="number" id="children" name="children" min="0" value="0">
+                            <span class="error" id="childrenError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="infants">Infants: *</label>
+                            <input type="number" id="infants" name="infants" min="0" value="0">
+                            <span class="error" id="infantsError"></span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit">Search Stays</button>
+                        <button type="reset">Reset</button>
+                    </div>
+                </form>
+
+                <div class="result" id="resultDiv">
+                    <h3>Stay Search Results</h3>
+                    <div id="resultContent"></div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Store for hotels data loaded from XML
+        let hotelsData = [];
+
+        // Valid cities in Texas and California
+        const validCities = [
+            // Texas cities
+            'dallas', 'houston', 'austin', 'san antonio', 'fort worth', 'el paso',
+            'arlington', 'corpus christi', 'plano', 'laredo', 'lubbock', 'irving',
+            // California cities
+            'los angeles', 'san diego', 'san jose', 'san francisco', 'fresno',
+            'sacramento', 'long beach', 'oakland', 'bakersfield', 'anaheim',
+            'santa ana', 'riverside', 'stockton', 'irvine'
+        ];
+
+        // Load hotels data from XML file
+        async function loadHotelsData() {
+            try {
+                const response = await fetch('hotels.xml');
+                if (!response.ok) {
+                    throw new Error('Failed to load hotels data');
+                }
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+                const hotels = xmlDoc.querySelectorAll('hotel');
+                hotelsData = Array.from(hotels).map(hotel => ({
+                    hotelId: hotel.querySelector('hotel-id').textContent,
+                    hotelName: hotel.querySelector('hotel-name').textContent,
+                    city: hotel.querySelector('city').textContent,
+                    availableRooms: parseInt(hotel.querySelector('available-rooms').textContent),
+                    date: hotel.querySelector('date').textContent,
+                    pricePerNight: parseFloat(hotel.querySelector('price-per-night').textContent)
+                }));
+
+                console.log('Hotels data loaded:', hotelsData.length, 'hotels');
+            } catch (error) {
+                console.error('Error loading hotels data:', error);
+                alert('Error: Could not load hotels data. Please make sure hotels.xml exists in the same directory.');
+            }
+        }
+
+        // Load hotels data when page loads
+        loadHotelsData();
+
+        // Display current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Settings
+        document.getElementById('fontSize').addEventListener('change', function() {
+            document.getElementById('mainContent').style.fontSize = this.value + 'px';
+        });
+
+        document.getElementById('bgColor').addEventListener('change', function() {
+            document.getElementById('mainContent').style.backgroundColor = this.value;
+        });
+
+        // Form validation (WITHOUT regular expressions as per assignment)
+        document.getElementById('staysForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            const errors = document.querySelectorAll('.error');
+            errors.forEach(error => {
+                error.textContent = '';
+                error.classList.remove('show');
+            });
+
+            let isValid = true;
+
+            // Get form values
+            const city = document.getElementById('city').value.trim();
+            const checkIn = document.getElementById('checkIn').value;
+            const checkOut = document.getElementById('checkOut').value;
+            const adults = parseInt(document.getElementById('adults').value) || 0;
+            const children = parseInt(document.getElementById('children').value) || 0;
+            const infants = parseInt(document.getElementById('infants').value) || 0;
+
+            // Validate city (must be TX or CA city)
+            if (!city) {
+                showError('cityError', 'City is required');
+                isValid = false;
+            } else if (!validCities.includes(city.toLowerCase())) {
+                showError('cityError', 'City must be in Texas or California');
+                isValid = false;
+            }
+
+            // Validate check-in date
+            if (!checkIn) {
+                showError('checkInError', 'Check-in date is required');
+                isValid = false;
+            } else if (!isValidDateRange(checkIn)) {
+                showError('checkInError', 'Check-in date must be between Sep 1, 2024 and Dec 1, 2024');
+                isValid = false;
+            }
+
+            // Validate check-out date
+            if (!checkOut) {
+                showError('checkOutError', 'Check-out date is required');
+                isValid = false;
+            } else if (!isValidDateRange(checkOut)) {
+                showError('checkOutError', 'Check-out date must be between Sep 1, 2024 and Dec 1, 2024');
+                isValid = false;
+            } else if (new Date(checkOut) <= new Date(checkIn)) {
+                showError('checkOutError', 'Check-out date must be after check-in date');
+                isValid = false;
+            }
+
+            // Validate number of guests (max 2 per room, except infants)
+            const adultsAndChildren = adults + children;
+            if (adultsAndChildren > 2) {
+                showError('adultsError', 'Maximum 2 guests (adults + children) per room allowed');
+                isValid = false;
+            }
+
+            // If all validations pass, display results
+            if (isValid) {
+                displayResults(city, checkIn, checkOut, adults, children, infants);
+            }
+        });
+
+        function isValidDateRange(dateStr) {
+            const date = new Date(dateStr);
+            const minDate = new Date('2024-09-01');
+            const maxDate = new Date('2024-12-01');
+            return date >= minDate && date <= maxDate;
+        }
+
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        function displayResults(city, checkIn, checkOut, adults, children, infants) {
+            const resultDiv = document.getElementById('resultDiv');
+            const resultContent = document.getElementById('resultContent');
+
+            // Calculate number of rooms needed
+            const adultsAndChildren = adults + children;
+            const roomsNeeded = Math.ceil(adultsAndChildren / 2);
+
+            // Search for hotels in the city
+            const availableHotels = hotelsData.filter(hotel =>
+                hotel.city.toLowerCase() === city.toLowerCase() &&
+                hotel.availableRooms >= roomsNeeded
+            );
+
+            let html = `
+                <h3>Search Summary</h3>
+                <p><strong>City:</strong> ${city}</p>
+                <p><strong>Check-in Date:</strong> ${checkIn}</p>
+                <p><strong>Check-out Date:</strong> ${checkOut}</p>
+                <p><strong>Guests:</strong> Adults: ${adults}, Children: ${children}, Infants: ${infants}</p>
+                <p><strong>Rooms Needed:</strong> ${roomsNeeded}</p>
+                <hr style="margin: 20px 0;">
+            `;
+
+            if (availableHotels.length === 0) {
+                html += '<div class="no-flights" style="background: #fadbd8; color: #c0392b; padding: 15px; border-radius: 8px;">😕 No hotels found with enough available rooms in this city. Please try a different city or dates.</div>';
+            } else {
+                html += `<h3 style="color: #2e7d32;">✓ Available Hotels (${availableHotels.length} found)</h3>`;
+
+                // Calculate nights
+                const checkInDate = new Date(checkIn);
+                const checkOutDate = new Date(checkOut);
+                const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+
+                availableHotels.forEach(hotel => {
+                    const totalPrice = nights * roomsNeeded * hotel.pricePerNight;
+
+                    html += `
+                        <div class="cart-item" style="margin-bottom: 20px; background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                            <h4 style="color: #1d3557; margin-bottom: 15px;">${hotel.hotelName}</h4>
+                            <div class="item-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                                <div><strong>Hotel ID:</strong> ${hotel.hotelId}</div>
+                                <div><strong>City:</strong> ${hotel.city}</div>
+                                <div><strong>Available Rooms:</strong> ${hotel.availableRooms}</div>
+                                <div><strong>Nights:</strong> ${nights}</div>
+                                <div><strong>Rooms Needed:</strong> ${roomsNeeded}</div>
+                            </div>
+                            <div class="price-summary" style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                    <span>Price per night per room:</span>
+                                    <span>$${hotel.pricePerNight.toFixed(2)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                    <span>${nights} nights × ${roomsNeeded} room(s):</span>
+                                    <span>$${(nights * roomsNeeded * hotel.pricePerNight).toFixed(2)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 1.3em; font-weight: bold; color: #2e7d32; border-top: 2px solid #4caf50; padding-top: 10px; margin-top: 10px;">
+                                    <span>Total Price:</span>
+                                    <span>$${totalPrice.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <button onclick='selectHotel(${JSON.stringify(hotel).replace(/'/g, "&#39;")}, "${checkIn}", "${checkOut}", ${adults}, ${children}, ${infants}, ${roomsNeeded})' style="margin-top: 15px; background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
+                                Select Hotel
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            resultContent.innerHTML = html;
+            resultDiv.classList.add('show');
+        }
+
+        function selectHotel(hotel, checkIn, checkOut, adults, children, infants, rooms) {
+            addToCart({
+                type: 'hotel',
+                hotelId: hotel.hotelId,
+                hotelName: hotel.hotelName,
+                city: hotel.city,
+                checkIn: checkIn,
+                checkOut: checkOut,
+                adults: adults,
+                children: children,
+                infants: infants,
+                rooms: rooms,
+                pricePerNight: hotel.pricePerNight
+            });
+        }
+    </script>
+    <script src="/add2cart.js"></script>
+</body>
+</html>

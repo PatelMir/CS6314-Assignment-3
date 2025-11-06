@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Cars</title>
+    <link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="stays.html">Stays</a></li>
+                <li><a href="flights.html">Flights</a></li>
+                <li><a href="cars.html" class="active">Cars</a></li>
+                <li><a href="cruises.html">Cruises</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="cart.html">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Rent a Car</h2>
+
+                <div id="carFormContainer"></div>
+
+                <div class="result" id="resultDiv">
+                    <h3>Car Rental Results</h3>
+                    <div id="resultContent"></div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Store for cars data loaded from XML
+        let carsData = [];
+        let userBookings = [];
+
+        // Load cars data from XML file
+        async function loadCarsData() {
+            try {
+                const response = await fetch('cars.xml');
+                if (!response.ok) {
+                    throw new Error('Failed to load cars data');
+                }
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+                const cars = xmlDoc.querySelectorAll('car');
+                carsData = Array.from(cars).map(car => ({
+                    carId: car.querySelector('car-id').textContent,
+                    city: car.querySelector('city').textContent,
+                    type: car.querySelector('type').textContent,
+                    checkInDate: car.querySelector('check-in-date').textContent,
+                    checkOutDate: car.querySelector('check-out-date').textContent,
+                    pricePerDay: parseFloat(car.querySelector('price-per-day').textContent)
+                }));
+
+                console.log('Cars data loaded:', carsData.length, 'cars');
+            } catch (error) {
+                console.error('Error loading cars data:', error);
+                alert('Error: Could not load cars data. Please make sure cars.xml exists in the same directory.');
+            }
+        }
+
+        // Load user bookings from localStorage
+        function loadUserBookings() {
+            const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+            userBookings = bookings.filter(b => b.type === 'car');
+        }
+
+        // Load data when page loads
+        loadCarsData();
+        loadUserBookings();
+
+        // Display current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Settings
+        document.getElementById('fontSize').addEventListener('change', function() {
+            document.getElementById('mainContent').style.fontSize = this.value + 'px';
+        });
+
+        document.getElementById('bgColor').addEventListener('change', function() {
+            document.getElementById('mainContent').style.backgroundColor = this.value;
+        });
+
+        // Build form using DOM methods
+        function buildCarForm() {
+            const container = document.getElementById('carFormContainer');
+            
+            // Create form element
+            const form = document.createElement('form');
+            form.id = 'carForm';
+            
+            // City input
+            const cityGroup = document.createElement('div');
+            cityGroup.className = 'form-group';
+            
+            const cityLabel = document.createElement('label');
+            cityLabel.setAttribute('for', 'city');
+            cityLabel.textContent = 'City: *';
+            
+            const cityInput = document.createElement('input');
+            cityInput.type = 'text';
+            cityInput.id = 'city';
+            cityInput.name = 'city';
+            cityInput.placeholder = 'Enter city name';
+            
+            const cityError = document.createElement('span');
+            cityError.className = 'error';
+            cityError.id = 'cityError';
+            
+            cityGroup.appendChild(cityLabel);
+            cityGroup.appendChild(cityInput);
+            cityGroup.appendChild(cityError);
+            
+            // Car type select
+            const carTypeGroup = document.createElement('div');
+            carTypeGroup.className = 'form-group';
+            
+            const carTypeLabel = document.createElement('label');
+            carTypeLabel.setAttribute('for', 'carType');
+            carTypeLabel.textContent = 'Type of Car: *';
+            
+            const carTypeSelect = document.createElement('select');
+            carTypeSelect.id = 'carType';
+            carTypeSelect.name = 'carType';
+            
+            const carTypes = ['', 'Economy', 'SUV', 'Compact', 'Midsize'];
+            carTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type.toLowerCase();
+                option.textContent = type || '-- Select Car Type --';
+                carTypeSelect.appendChild(option);
+            });
+            
+            const carTypeError = document.createElement('span');
+            carTypeError.className = 'error';
+            carTypeError.id = 'carTypeError';
+            
+            carTypeGroup.appendChild(carTypeLabel);
+            carTypeGroup.appendChild(carTypeSelect);
+            carTypeGroup.appendChild(carTypeError);
+            
+            // Date inputs row
+            const dateRow = document.createElement('div');
+            dateRow.className = 'form-row';
+            
+            // Check-in date
+            const checkInGroup = document.createElement('div');
+            checkInGroup.className = 'form-group';
+            
+            const checkInLabel = document.createElement('label');
+            checkInLabel.setAttribute('for', 'checkIn');
+            checkInLabel.textContent = 'Pick-up Date: *';
+            
+            const checkInInput = document.createElement('input');
+            checkInInput.type = 'date';
+            checkInInput.id = 'checkIn';
+            checkInInput.name = 'checkIn';
+            
+            const checkInError = document.createElement('span');
+            checkInError.className = 'error';
+            checkInError.id = 'checkInError';
+            
+            checkInGroup.appendChild(checkInLabel);
+            checkInGroup.appendChild(checkInInput);
+            checkInGroup.appendChild(checkInError);
+            
+            // Check-out date
+            const checkOutGroup = document.createElement('div');
+            checkOutGroup.className = 'form-group';
+            
+            const checkOutLabel = document.createElement('label');
+            checkOutLabel.setAttribute('for', 'checkOut');
+            checkOutLabel.textContent = 'Drop-off Date: *';
+            
+            const checkOutInput = document.createElement('input');
+            checkOutInput.type = 'date';
+            checkOutInput.id = 'checkOut';
+            checkOutInput.name = 'checkOut';
+            
+            const checkOutError = document.createElement('span');
+            checkOutError.className = 'error';
+            checkOutError.id = 'checkOutError';
+            
+            checkOutGroup.appendChild(checkOutLabel);
+            checkOutGroup.appendChild(checkOutInput);
+            checkOutGroup.appendChild(checkOutError);
+            
+            dateRow.appendChild(checkInGroup);
+            dateRow.appendChild(checkOutGroup);
+            
+            // Buttons
+            const buttonDiv = document.createElement('div');
+            buttonDiv.style.marginTop = '20px';
+            
+            const submitBtn = document.createElement('button');
+            submitBtn.type = 'submit';
+            submitBtn.textContent = 'Submit';
+            
+            const resetBtn = document.createElement('button');
+            resetBtn.type = 'reset';
+            resetBtn.textContent = 'Reset';
+            
+            buttonDiv.appendChild(submitBtn);
+            buttonDiv.appendChild(resetBtn);
+            
+            // Append all to form
+            form.appendChild(cityGroup);
+            form.appendChild(carTypeGroup);
+            form.appendChild(dateRow);
+            form.appendChild(buttonDiv);
+            
+            // Append form to container
+            container.appendChild(form);
+            
+            // Add event listener
+            form.addEventListener('submit', validateCarForm);
+        }
+
+        function validateCarForm(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            const errors = document.querySelectorAll('.error');
+            errors.forEach(error => {
+                error.textContent = '';
+                error.classList.remove('show');
+            });
+
+            let isValid = true;
+
+            // Get form values
+            const city = document.getElementById('city').value.trim();
+            const carType = document.getElementById('carType').value;
+            const checkIn = document.getElementById('checkIn').value;
+            const checkOut = document.getElementById('checkOut').value;
+
+            // Validate city
+            if (!city) {
+                showError('cityError', 'City is required');
+                isValid = false;
+            }
+
+            // Validate car type (must be economy, SUV, Compact, or Midsize)
+            const validCarTypes = ['economy', 'suv', 'compact', 'midsize'];
+            if (!carType) {
+                showError('carTypeError', 'Car type is required');
+                isValid = false;
+            } else if (!validCarTypes.includes(carType.toLowerCase())) {
+                showError('carTypeError', 'Car type must be Economy, SUV, Compact, or Midsize');
+                isValid = false;
+            }
+
+            // Validate check-in date
+            if (!checkIn) {
+                showError('checkInError', 'Pick-up date is required');
+                isValid = false;
+            } else if (!isValidDateRange(checkIn)) {
+                showError('checkInError', 'Pick-up date must be between Sep 1, 2024 and Dec 1, 2024');
+                isValid = false;
+            }
+
+            // Validate check-out date
+            if (!checkOut) {
+                showError('checkOutError', 'Drop-off date is required');
+                isValid = false;
+            } else if (!isValidDateRange(checkOut)) {
+                showError('checkOutError', 'Drop-off date must be between Sep 1, 2024 and Dec 1, 2024');
+                isValid = false;
+            } else if (new Date(checkOut) <= new Date(checkIn)) {
+                showError('checkOutError', 'Drop-off date must be after pick-up date');
+                isValid = false;
+            }
+
+            // If all validations pass, display results
+            if (isValid) {
+                displayResults(city, carType, checkIn, checkOut);
+            }
+        }
+
+        function isValidDateRange(dateStr) {
+            const date = new Date(dateStr);
+            const minDate = new Date('2024-09-01');
+            const maxDate = new Date('2024-12-01');
+            return date >= minDate && date <= maxDate;
+        }
+
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        function displayResults(city, carType, checkIn, checkOut) {
+            const resultDiv = document.getElementById('resultDiv');
+            const resultContent = document.getElementById('resultContent');
+
+            // Calculate rental duration
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+            // Check if dates overlap with available dates
+            function isDateInRange(checkInStr, checkOutStr, availCheckIn, availCheckOut) {
+                const reqStart = new Date(checkInStr);
+                const reqEnd = new Date(checkOutStr);
+                const availStart = new Date(availCheckIn);
+                const availEnd = new Date(availCheckOut);
+                return reqStart >= availStart && reqEnd <= availEnd;
+            }
+
+            // Search for cars matching criteria
+            const availableCars = carsData.filter(car =>
+                car.city.toLowerCase() === city.toLowerCase() &&
+                car.type.toLowerCase() === carType.toLowerCase() &&
+                isDateInRange(checkIn, checkOut, car.checkInDate, car.checkOutDate)
+            );
+
+            // Get personalized recommendations based on user history
+            const userPreferences = getUserPreferences();
+            const recommendedCars = getRecommendations(userPreferences);
+
+            let html = `
+                <h3>Search Summary</h3>
+                <p><strong>City:</strong> ${city}</p>
+                <p><strong>Car Type:</strong> ${carType.charAt(0).toUpperCase() + carType.slice(1)}</p>
+                <p><strong>Pick-up Date:</strong> ${checkIn}</p>
+                <p><strong>Drop-off Date:</strong> ${checkOut}</p>
+                <p><strong>Rental Duration:</strong> ${days} day(s)</p>
+                <hr style="margin: 20px 0;">
+            `;
+
+            // Show personalized recommendations first
+            if (recommendedCars.length > 0) {
+                html += `
+                    <div style="background: linear-gradient(135deg, #fff3cd, #ffeaa7); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 5px solid #f39c12;">
+                        <h3 style="color: #d35400; margin-bottom: 15px;">⭐ Personalized Recommendations</h3>
+                        <p style="color: #6c5ce7; margin-bottom: 15px;">Based on your previous bookings, we recommend these options:</p>
+                `;
+
+                recommendedCars.forEach(rec => {
+                    html += `
+                        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                            <p><strong>${rec.city}</strong> - ${rec.type} (You've booked this ${rec.count} time(s) before)</p>
+                            <p style="font-size: 0.9em; color: #666;">Quick Book: Just select your dates above and we'll find the best match!</p>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // Show search results
+            if (availableCars.length === 0) {
+                html += '<div class="no-flights" style="background: #fadbd8; color: #c0392b; padding: 15px; border-radius: 8px;">No cars found matching your criteria. Please try a different city, car type, or dates.</div>';
+            } else {
+                html += `<h3 style="color: #2e7d32;">✓ Available Cars (${availableCars.length} found)</h3>`;
+
+                availableCars.forEach(car => {
+                    const totalPrice = days * car.pricePerDay;
+
+                    html += `
+                        <div class="cart-item" style="margin-bottom: 20px; background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db;">
+                            <h4 style="color: #1d3557; margin-bottom: 15px;">${car.type.charAt(0).toUpperCase() + car.type.slice(1)} Car</h4>
+                            <div class="item-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                                <div><strong>Car ID:</strong> ${car.carId}</div>
+                                <div><strong>City:</strong> ${car.city}</div>
+                                <div><strong>Type:</strong> ${car.type}</div>
+                                <div><strong>Rental Days:</strong> ${days}</div>
+                            </div>
+                            <div class="price-summary" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                    <span>Price per day:</span>
+                                    <span>$${car.pricePerDay.toFixed(2)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 1.3em; font-weight: bold; color: #1565c0; border-top: 2px solid #2196f3; padding-top: 10px; margin-top: 10px;">
+                                    <span>Total Price (${days} days):</span>
+                                    <span>$${totalPrice.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <button onclick='selectCar(${JSON.stringify(car).replace(/'/g, "&#39;")}, "${checkIn}", "${checkOut}")' style="margin-top: 15px; background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600;">
+                                Book This Car
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            resultContent.innerHTML = html;
+            resultDiv.classList.add('show');
+        }
+
+        // Get user preferences from booking history
+        function getUserPreferences() {
+            const preferences = {};
+            userBookings.forEach(booking => {
+                const key = `${booking.city}-${booking.carType}`;
+                preferences[key] = (preferences[key] || 0) + 1;
+            });
+            return preferences;
+        }
+
+        // Get personalized recommendations
+        function getRecommendations(preferences) {
+            const recommendations = [];
+            for (const [key, count] of Object.entries(preferences)) {
+                const [city, type] = key.split('-');
+                recommendations.push({ city, type, count });
+            }
+            // Sort by frequency
+            recommendations.sort((a, b) => b.count - a.count);
+            return recommendations.slice(0, 3); // Top 3 recommendations
+        }
+
+        function selectCar(car, checkIn, checkOut) {
+            addToCart({
+                type: 'car',
+                carId: car.carId,
+                city: car.city,
+                carType: car.type,
+                pickUpDate: checkIn,
+                dropOffDate: checkOut,
+                pricePerDay: car.pricePerDay
+            });
+        }
+
+        // Build the form when page loads
+        buildCarForm();
+    </script>
+    <script src="/add2cart.js"></script>
+</body>
+</html>
