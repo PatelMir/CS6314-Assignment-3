@@ -336,6 +336,8 @@ form {
     height: 16px;
     cursor: pointer;
 }
+
+
 /* Flight Search Results Styles */
 .search-results {
     margin-top: 40px;
@@ -449,6 +451,7 @@ form {
     align-items: center;
     gap: 5px;
 }
+
 
 /* Flight Route */
 .flight-route {

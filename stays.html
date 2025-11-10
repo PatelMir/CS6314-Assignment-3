@@ -47,21 +47,53 @@
 
                 <form id="staysForm">
                     <div class="form-group">
-                        <label for="city">City (TX or CA): *</label>
-                        <input type="text" id="city" name="city" placeholder="e.g., Dallas, Los Angeles">
-                        <span class="error" id="cityError"></span>
-                    </div>
+                            <label for="origin">Origin (TX or CA city): *</label>
+                            <select id="origin" name="origin">
+                                <option value="">-- Select Origin City --</option>
+                                <optgroup label="Texas Cities">
+                                    <option value="Dallas">Dallas</option>
+                                    <option value="Houston">Houston</option>
+                                    <option value="Austin">Austin</option>
+                                    <option value="San Antonio">San Antonio</option>
+                                    <option value="Fort Worth">Fort Worth</option>
+                                    <option value="El Paso">El Paso</option>
+                                    <option value="Arlington">Arlington</option>
+                                    <option value="Corpus Christi">Corpus Christi</option>
+                                    <option value="Plano">Plano</option>
+                                    <option value="Laredo">Laredo</option>
+                                    <option value="Lubbock">Lubbock</option>
+                                    <option value="Irving">Irving</option>
+                                </optgroup>
+                                <optgroup label="California Cities">
+                                    <option value="Los Angeles">Los Angeles</option>
+                                    <option value="San Diego">San Diego</option>
+                                    <option value="San Jose">San Jose</option>
+                                    <option value="San Francisco">San Francisco</option>
+                                    <option value="Fresno">Fresno</option>
+                                    <option value="Sacramento">Sacramento</option>
+                                    <option value="Long Beach">Long Beach</option>
+                                    <option value="Oakland">Oakland</option>
+                                    <option value="Bakersfield">Bakersfield</option>
+                                    <option value="Anaheim">Anaheim</option>
+                                    <option value="Santa Ana">Santa Ana</option>
+                                    <option value="Riverside">Riverside</option>
+                                    <option value="Stockton">Stockton</option>
+                                    <option value="Irvine">Irvine</option>
+                                </optgroup>
+                            </select>
+                            <span class="error" id="originError"></span>
+                        </div>                                
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="checkIn">Check-in Date: *</label>
-                            <input type="date" id="checkIn" name="checkIn">
+                            <input type="date" id="checkIn" name="checkIn" value="2024-09-01">
                             <span class="error" id="checkInError"></span>
                         </div>
 
                         <div class="form-group">
                             <label for="checkOut">Check-out Date: *</label>
-                            <input type="date" id="checkOut" name="checkOut">
+                            <input type="date" id="checkOut" name="checkOut" value="2024-09-02">
                             <span class="error" id="checkOutError"></span>
                         </div>
                     </div>
