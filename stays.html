@@ -48,20 +48,48 @@
                 <form id="staysForm">
                     <div class="form-group">
                         <label for="city">City (TX or CA): *</label>
-                        <input type="text" id="city" name="city" placeholder="e.g., Dallas, Los Angeles">
+                        <input type="text" id="city" name="city" list="cityList" placeholder="Type city name...">
+                        <datalist id="cityList">
+                            <option value="Dallas">Dallas, TX</option>
+                            <option value="Houston">Houston, TX</option>
+                            <option value="Austin">Austin, TX</option>
+                            <option value="San Antonio">San Antonio, TX</option>
+                            <option value="Fort Worth">Fort Worth, TX</option>
+                            <option value="El Paso">El Paso, TX</option>
+                            <option value="Arlington">Arlington, TX</option>
+                            <option value="Corpus Christi">Corpus Christi, TX</option>
+                            <option value="Plano">Plano, TX</option>
+                            <option value="Laredo">Laredo, TX</option>
+                            <option value="Lubbock">Lubbock, TX</option>
+                            <option value="Irving">Irving, TX</option>
+                            <option value="Los Angeles">Los Angeles, CA</option>
+                            <option value="San Diego">San Diego, CA</option>
+                            <option value="San Jose">San Jose, CA</option>
+                            <option value="San Francisco">San Francisco, CA</option>
+                            <option value="Fresno">Fresno, CA</option>
+                            <option value="Sacramento">Sacramento, CA</option>
+                            <option value="Long Beach">Long Beach, CA</option>
+                            <option value="Oakland">Oakland, CA</option>
+                            <option value="Bakersfield">Bakersfield, CA</option>
+                            <option value="Anaheim">Anaheim, CA</option>
+                            <option value="Santa Ana">Santa Ana, CA</option>
+                            <option value="Riverside">Riverside, CA</option>
+                            <option value="Stockton">Stockton, CA</option>
+                            <option value="Irvine">Irvine, CA</option>
+                        </datalist>
                         <span class="error" id="cityError"></span>
-                    </div>
+                    </div>                               
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="checkIn">Check-in Date: *</label>
-                            <input type="date" id="checkIn" name="checkIn">
+                            <input type="date" id="checkIn" name="checkIn" value="2024-09-01">
                             <span class="error" id="checkInError"></span>
                         </div>
 
                         <div class="form-group">
                             <label for="checkOut">Check-out Date: *</label>
-                            <input type="date" id="checkOut" name="checkOut">
+                            <input type="date" id="checkOut" name="checkOut" value="2024-09-02">
                             <span class="error" id="checkOutError"></span>
                         </div>
                     </div>
@@ -355,6 +383,6 @@
             });
         }
     </script>
-    <script src="/add2cart.js"></script>
+    <script src="add2cart.js"></script>
 </body>
 </html>
