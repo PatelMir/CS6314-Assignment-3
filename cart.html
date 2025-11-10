@@ -459,7 +459,62 @@
             document.getElementById('cartContent').style.display = 'block';
         }
 
-        function bookItems() {
+        function saveCarBookingsAsXML(carBookings) {
+            console.log('Saving car bookings to XML...');
+            const parser = new DOMParser();
+            const serializer = new XMLSerializer();
+            
+            // Try to get existing XML bookings
+            const existingXMLString = localStorage.getItem('carBookingsXML');
+            let xmlDoc;
+
+            if (existingXMLString) {
+                xmlDoc = parser.parseFromString(existingXMLString, 'text/xml');
+            } else {
+                // Create a new XML document
+                xmlDoc = document.implementation.createDocument(null, 'bookings', null);
+            }
+
+            const root = xmlDoc.documentElement;
+
+            // Helper to create and append <element>text</element>
+            function createTextElement(doc, parent, tagName, text) {
+                const el = doc.createElement(tagName);
+                el.textContent = text;
+                parent.appendChild(el);
+            }
+
+            // Add each new booking to the XML
+            carBookings.forEach(booking => {
+                const bookingEl = xmlDoc.createElement('booking');
+
+                createTextElement(xmlDoc, bookingEl, 'userId', booking.userId);
+                createTextElement(xmlDoc, bookingEl, 'bookingNumber', booking.bookingNumber);
+                createTextElement(xmlDoc, bookingEl, 'bookingDate', booking.bookingDate);
+                createTextElement(xmlDoc, bookingEl, 'carId', booking.carId);
+                createTextElement(xmlDoc, bookingEl, 'city', booking.city);
+                createTextElement(xmlDoc, bookingEl, 'carType', booking.carType);
+                createTextElement(xmlDoc, bookingEl, 'pickUpDate', booking.pickUpDate);
+                createTextElement(xmlDoc, bookingEl, 'dropOffDate', booking.dropOffDate);
+                createTextElement(xmlDoc, bookingEl, 'pricePerDay', booking.pricePerDay);
+                
+                // Calculate total price for XML storage
+                const pickUp = new Date(booking.pickUpDate);
+                const dropOff = new Date(booking.dropOffDate);
+                const days = Math.ceil((dropOff - pickUp) / (1000 * 60 * 60 * 24));
+                const totalPrice = (days * booking.pricePerDay).toFixed(2);
+                createTextElement(xmlDoc, bookingEl, 'totalPrice', totalPrice);
+
+                root.appendChild(bookingEl);
+            });
+
+            // Save the updated XML string back to localStorage
+            const updatedXMLString = serializer.serializeToString(xmlDoc);
+            localStorage.setItem('carBookingsXML', updatedXMLString);
+            console.log('Car bookings XML store updated.');
+        }
+
+function bookItems() {
             const cart = getCart();
             const flightItems = cart.filter(item => item.type === 'flight');
 
@@ -472,8 +527,11 @@
                 }
             }
 
-            const bookings = [];
+            const jsonBookings = [];
+            const carBookings = [];
+            const allBookingsForConfirmation = []; // For display only
 
+            // --- Split bookings by type ---
             cart.forEach((item, itemIndex) => {
                 const bookingNumber = 'BK' + Date.now() + Math.floor(Math.random() * 1000);
                 const booking = {
@@ -488,20 +546,35 @@
                     const flightIndex = cart.filter((i, idx) => idx < itemIndex && i.type === 'flight').length;
                     booking.passengers = collectPassengerInfo(flightIndex, item);
                 }
+                
+                allBookingsForConfirmation.push(booking); // Add to confirmation list
 
-                bookings.push(booking);
+                // --- Route to correct storage ---
+                if (item.type === 'car') {
+                    carBookings.push(booking);
+                } else {
+                    jsonBookings.push(booking);
+                }
             });
 
-            // Save bookings
-            const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-            existingBookings.push(...bookings);
-            localStorage.setItem('bookings', JSON.stringify(existingBookings));
+            // Save JSON bookings (flights, hotels, cruises)
+            if (jsonBookings.length > 0) {
+                const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+                existingBookings.push(...jsonBookings);
+                localStorage.setItem('bookings', JSON.stringify(existingBookings));
+                console.log('Saved JSON bookings to localStorage.');
+            }
 
-            // Update available seats/rooms
-            updateAvailability(bookings);
+            // Save Car bookings to XML
+            if (carBookings.length > 0) {
+                saveCarBookingsAsXML(carBookings);
+            }
 
-            // Show confirmation
-            displayBookingConfirmation(bookings);
+            // Update availability for all booked items
+            updateAvailability(allBookingsForConfirmation);
+
+            // Show confirmation for ALL items
+            displayBookingConfirmation(allBookingsForConfirmation);
 
             // Clear cart
             localStorage.removeItem('travelCart');
