@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Cruises</title>
+    <link rel="stylesheet" href="mystyle.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/stays">Stays</a></li>
+                <li><a href="/flights">Flights</a></li>
+                <li><a href="/cars">Cars</a></li>
+                <li><a href="/cruises">Cruises</a></li>
+                <li><a href="/contact">Contact Us</a></li>
+                <li><a href="/cart">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Book Your Cruise</h2>
+
+                <form id="cruiseForm">
+<form id="cruiseForm">
+                    <div class="form-group">
+                        <label for="destination">Destination: *</label>
+                        <input type="text" id="destination" name="destination" placeholder="Type destination..." list="destinationList">
+                        <datalist id="destinationList">
+                            <option value="Alaska"></option>
+                            <option value="Bahamas"></option>
+                            <option value="Europe"></option>
+                            <option value="Mexico"></option>
+                        </datalist>
+                        <span class="error" id="destinationError"></span>
+                    </div>
+
+                    <h3>Departing Between</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departStart">Start Date: *</label>
+                            <input type="date" id="departStart" name="departStart" value="2024-09-01">
+                            <span class="error" id="departStartError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="departEnd">End Date: *</label>
+                            <input type="date" id="departEnd" name="departEnd" value="2024-09-02">
+                            <span class="error" id="departEndError"></span>
+                        </div>
+                    </div>
+
+                    <h3>Duration of Cruise (Days)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minDuration">Minimum: *</label>
+                            <input type="number" id="minDuration" name="minDuration" min="3" max="7" value="3">
+                            <span class="error" id="minDurationError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="maxDuration">Maximum: *</label>
+                            <input type="number" id="maxDuration" name="maxDuration" min="3" max="10" value="7">
+                            <span class="error" id="maxDurationError"></span>
+                        </div>
+                    </div>
+
+                    <h3>Number of Guests</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="adults">Adults: *</label>
+                            <input type="number" id="adults" name="adults" min="0" value="1">
+                            <span class="error" id="adultsError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="children">Children: *</label>
+                            <input type="number" id="children" name="children" min="0" value="0">
+                            <span class="error" id="childrenError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="infants">Infants: *</label>
+                            <input type="number" id="infants" name="infants" min="0" value="0">
+                            <span class="error" id="infantsError"></span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit">Submit</button>
+                        <button type="reset">Reset</button>
+                    </div>
+                </form>
+
+                <div class="result" id="resultDiv">
+                    <h3>Cruise Booking Results</h3>
+                    <div id="resultContent"></div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="api.js"></script>  
+    <script>
+        function bookCruise(destination, departStart, departEnd, minDuration, maxDuration, adults, children, infants, rooms) {
+            addToCart({
+                type: 'cruise',
+                destination: destination,
+                departStart: departStart,
+                departEnd: departEnd,
+                minDuration: minDuration,
+                maxDuration: maxDuration,
+                adults: adults,
+                children: children,
+                infants: infants,
+                rooms: rooms
+            });
+        }
+
+        if (typeof jQuery === 'undefined') {
+        console.error('jQuery failed to load from CDN');
+        alert('Error: jQuery library failed to load. Please check your internet connection.');
+        } else {
+            console.log('jQuery loaded successfully:', jQuery.fn.jquery);
+            $(document).ready(function() {
+                // Display current date and time
+                function updateDateTime() {
+                    const now = new Date();
+                    const options = { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    };
+                    $('#datetime').text(now.toLocaleDateString('en-US', options));
+                }
+                
+                updateDateTime();
+                setInterval(updateDateTime, 1000);
+
+                // Font size change using jQuery
+                $('#fontSize').change(function() {
+                    $('#mainContent').css('fontSize', $(this).val() + 'px');
+                });
+
+                // Background color change using jQuery
+                $('#bgColor').change(function() {
+                    $('#mainContent').css('backgroundColor', $(this).val());
+                });
+
+                // Dynamic min/max duration constraints
+                $('#maxDuration').on('input', function() {
+                    const maxVal = parseInt($(this).val()) || 10;
+                    $('#minDuration').attr('max', maxVal);
+                    
+                    // If current min is greater than new max, adjust it
+                    const currentMin = parseInt($('#minDuration').val()) || 3;
+                    if (currentMin > maxVal) {
+                        $('#minDuration').val(maxVal);
+                    }
+                });
+
+                $('#minDuration').on('input', function() {
+                    const minVal = parseInt($(this).val()) || 3;
+                    $('#maxDuration').attr('min', minVal);
+                    
+                    // If current max is less than new min, adjust it
+                    const currentMax = parseInt($('#maxDuration').val()) || 10;
+                    if (currentMax < minVal) {
+                        $('#maxDuration').val(minVal);
+                    }
+                });
+
+                // Form validation using jQuery
+                $('#cruiseForm').submit(function(e) {
+                    e.preventDefault();
+                    
+                    // Clear previous errors using jQuery
+                    $('.error').text('').removeClass('show');
+
+                    let isValid = true;
+
+                    // Get form values using jQuery
+                    const destination = $('#destination').val();
+                    const departStart = $('#departStart').val();
+                    const departEnd = $('#departEnd').val();
+                    const minDuration = parseInt($('#minDuration').val()) || 0;
+                    const maxDuration = parseInt($('#maxDuration').val()) || 0;
+                    const adults = parseInt($('#adults').val()) || 0;
+                    const children = parseInt($('#children').val()) || 0;
+                    const infants = parseInt($('#infants').val()) || 0;
+
+                    // Validate destination (must be Alaska, Bahamas, Europe, or Mexico)
+                    const validDestinations = ['Alaska', 'Bahamas', 'Europe', 'Mexico'];
+                    if (!destination) {
+                        showError('destinationError', 'Please select a cruise destination');
+                        isValid = false;
+                    } else if (!validDestinations.includes(destination)) {
+                        showError('destinationError', 'Destination must be Alaska, Bahamas, Europe, or Mexico');
+                        isValid = false;
+                    }
+
+                    // Validate departing start date
+                    if (!departStart) {
+                        showError('departStartError', 'Start date is required');
+                        isValid = false;
+                    } else if (!isValidDateRange(departStart)) {
+                        showError('departStartError', 'Start date must be between Sep 1, 2024 and Dec 1, 2024');
+                        isValid = false;
+                    }
+
+                    // Validate departing end date
+                    if (!departEnd) {
+                        showError('departEndError', 'End date is required');
+                        isValid = false;
+                    } else if (!isValidDateRange(departEnd)) {
+                        showError('departEndError', 'End date must be between Sep 1, 2024 and Dec 1, 2024');
+                        isValid = false;
+                    } else if (new Date(departEnd) < new Date(departStart)) {
+                        showError('departEndError', 'End date must be after start date');
+                        isValid = false;
+                    }
+
+                    // Validate minimum duration (cannot be less than 3)
+                    if (minDuration < 3) {
+                        showError('minDurationError', 'Minimum duration cannot be less than 3 days');
+                        isValid = false;
+                    }
+
+                    // Validate maximum duration (cannot be greater than 10)
+                    if (maxDuration > 10) {
+                        showError('maxDurationError', 'Maximum duration cannot be greater than 10 days');
+                        isValid = false;
+                    }
+
+                    // Validate that minimum is less than or equal to maximum
+                    if (minDuration > maxDuration) {
+                        showError('maxDurationError', 'Maximum duration must be greater than or equal to minimum');
+                        isValid = false;
+                    }
+
+                    // Validate number of guests (max 2 per room, except infants)
+                    const adultsAndChildren = adults + children;
+                    if (adultsAndChildren > 2) {
+                        showError('adultsError', 'Maximum 2 guests (adults + children) per room allowed');
+                        isValid = false;
+                    }
+
+                    // If all validations pass, display results using jQuery
+                    if (isValid) {
+                        displayResults(destination, departStart, departEnd, minDuration, maxDuration, adults, children, infants);
+                    }
+                });
+
+                function isValidDateRange(dateStr) {
+                    const date = new Date(dateStr);
+                    const minDate = new Date('2024-09-01');
+                    const maxDate = new Date('2024-12-01');
+                    return date >= minDate && date <= maxDate;
+                }
+
+                function showError(elementId, message) {
+                    $('#' + elementId).text(message).addClass('show');
+                }
+
+                function displayResults(destination, departStart, departEnd, minDuration, maxDuration, adults, children, infants) {
+                    // Calculate number of rooms needed
+                    const adultsAndChildren = adults + children;
+                    const roomsNeeded = Math.ceil(adultsAndChildren / 2);
+
+                    // Calculate pricing
+                    const basePrice = 500; // Base price per person
+                    const adultPrice = basePrice;
+                    const childPrice = adultPrice * 0.7;
+                    const infantPrice = adultPrice * 0.1;
+                    const totalPrice = (adults * adultPrice) + (children * childPrice) + (infants * infantPrice);
+
+                    const html = `
+                        <h3>Cruise Booking Summary</h3>
+                        <p><strong>Destination:</strong> ${destination}</p>
+                        <p><strong>Departing Between:</strong> ${departStart} to ${departEnd}</p>
+                        <p><strong>Duration:</strong> ${minDuration} to ${maxDuration} days</p>
+                        <p><strong>Guests:</strong></p>
+                        <ul>
+                            <li>Adults: ${adults}</li>
+                            <li>Children: ${children}</li>
+                            <li>Infants: ${infants}</li>
+                            <li>Total: ${adults + children + infants}</li>
+                        </ul>
+                        <p><strong>Rooms Needed:</strong> ${roomsNeeded}</p>
+                        <div class="price-summary" style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                <span>Adults (${adults} × $${adultPrice.toFixed(2)}):</span>
+                                <span>$${(adults * adultPrice).toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                <span>Children (${children} × $${childPrice.toFixed(2)}):</span>
+                                <span>$${(children * childPrice).toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                <span>Infants (${infants} × $${infantPrice.toFixed(2)}):</span>
+                                <span>$${(infants * infantPrice).toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 1.3em; font-weight: bold; color: #2e7d32; border-top: 2px solid #4caf50; padding-top: 10px; margin-top: 10px;">
+                                <span>Total Price:</span>
+                                <span>$${totalPrice.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <button onclick="bookCruise('${destination}', '${departStart}', '${departEnd}', ${minDuration}, ${maxDuration}, ${adults}, ${children}, ${infants}, ${roomsNeeded})" style="margin-top: 20px; background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 14px 35px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.05em; font-weight: 600;">
+                            Add to Cart
+                        </button>
+                    `;
+
+                    $('#resultContent').html(html);
+                    $('#resultDiv').addClass('show');
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

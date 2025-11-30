@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Home</title>
+    <link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/stays">Stays</a></li>
+                <li><a href="/flights">Flights</a></li>
+                <li><a href="/cars">Cars</a></li>
+                <li><a href="/cruises">Cruises</a></li>
+                <li><a href="/contact">Contact Us</a></li>
+                <li><a href="/cart">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Welcome to Travel Deals</h2>
+                <p>Find the best deals on flights, hotels, car rentals, and cruises all in one place!</p>
+                
+                <div style="margin-top: 30px;">
+                    <h3>Our Services</h3>
+                    <p><strong>Stays:</strong> Book comfortable accommodations in Texas and California</p>
+                    <p><strong>Flights:</strong> Find great deals on one-way and round-trip flights</p>
+                    <p><strong>Cars:</strong> Rent the perfect vehicle for your trip</p>
+                    <p><strong>Cruises:</strong> Explore amazing cruise destinations</p>
+                    <p><strong>Contact Us:</strong> Have questions? We're here to help!</p>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Display current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Font size change
+        document.getElementById('fontSize').addEventListener('change', function() {
+            document.getElementById('mainContent').style.fontSize = this.value + 'px';
+        });
+
+        // Background color change
+        document.getElementById('bgColor').addEventListener('change', function() {
+            document.getElementById('mainContent').style.backgroundColor = this.value;
+        });
+    </script>
+    <script src="api.js"></script>
+</body>
+</html>

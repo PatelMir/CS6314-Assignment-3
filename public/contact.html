@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Deals - Contact Us</title>
+    <link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Deals</h1>
+            <div id="datetime"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/stays">Stays</a></li>
+                <li><a href="/flights">Flights</a></li>
+                <li><a href="/cars">Cars</a></li>
+                <li><a href="/cruises">Cruises</a></li>
+                <li><a href="/contact">Contact Us</a></li>
+                <li><a href="/cart">Cart</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h3>Settings</h3>
+                <div class="controls">
+                    <label for="fontSize">Font Size:</label>
+                    <select id="fontSize">
+                        <option value="14">Small</option>
+                        <option value="16" selected>Medium</option>
+                        <option value="18">Large</option>
+                        <option value="20">Extra Large</option>
+                    </select>
+
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </aside>
+
+            <main id="mainContent">
+                <h2>Contact Us</h2>
+                <p>Please fill out the form below and we'll get back to you soon!</p>
+
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="firstName">First Name: *</label>
+                        <input type="text" id="firstName" name="firstName">
+                        <span class="error" id="firstNameError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Last Name: *</label>
+                        <input type="text" id="lastName" name="lastName">
+                        <span class="error" id="lastNameError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number: * (Format: (ddd)ddd-dddd)</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(123)456-7890">
+                        <span class="error" id="phoneError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Gender: *</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="gender" value="male"> Male</label>
+                            <label><input type="radio" name="gender" value="female"> Female</label>
+                            <label><input type="radio" name="gender" value="other"> Other</label>
+                        </div>
+                        <span class="error" id="genderError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address: *</label>
+                        <input type="email" id="email" name="email">
+                        <span class="error" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comment">Comment: * (Minimum 10 characters)</label>
+                        <textarea id="comment" name="comment"></textarea>
+                        <span class="error" id="commentError"></span>
+                    </div>
+
+                    <div>
+                        <button type="submit">Submit</button>
+                        <button type="reset">Reset</button>
+                    </div>
+                </form>
+
+                <div class="success-message" id="successMessage">
+                    <h3>Thank you for contacting us!</h3>
+                    <p id="submittedData"></p>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Travel Deals. All rights reserved.</p>
+        </footer>
+    </div>
+
+<script src="api.js"></script>
+<script>
+    // Display current date and time
+    function updateDateTime() {
+        const now = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', options);
+    }
+    
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // Font size change
+    document.getElementById('fontSize').addEventListener('change', function() {
+        document.getElementById('mainContent').style.fontSize = this.value + 'px';
+    });
+
+    // Background color change
+    document.getElementById('bgColor').addEventListener('change', function() {
+        document.getElementById('mainContent').style.backgroundColor = this.value;
+    });
+
+    // Phone number auto-formatting
+    document.getElementById('phone').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value.length <= 3) {
+                e.target.value = '(' + value;
+            } else if (value.length <= 6) {
+                e.target.value = '(' + value.substring(0, 3) + ')' + value.substring(3);
+            } else {
+                e.target.value = '(' + value.substring(0, 3) + ')' + value.substring(3, 6) + '-' + value.substring(6, 10);
+            }
+        }
+    });
+
+    // Form validation
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Clear previous errors
+        const errors = document.querySelectorAll('.error');
+        errors.forEach(error => {
+            error.textContent = '';
+            error.classList.remove('show');
+        });
+
+        let isValid = true;
+
+        // Get form values
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const comment = document.getElementById('comment').value.trim();
+        const gender = document.querySelector('input[name="gender"]:checked');
+
+        // Validate First Name (alphabetic only, first letter capital)
+        const nameRegex = /^[A-Z][a-zA-Z]*$/;
+        if (!firstName) {
+            showError('firstNameError', 'First name is required');
+            isValid = false;
+        } else if (!nameRegex.test(firstName)) {
+            showError('firstNameError', 'First name must be alphabetic only with first letter capital');
+            isValid = false;
+        }
+
+        // Validate Last Name (alphabetic only, first letter capital)
+        if (!lastName) {
+            showError('lastNameError', 'Last name is required');
+            isValid = false;
+        } else if (!nameRegex.test(lastName)) {
+            showError('lastNameError', 'Last name must be alphabetic only with first letter capital');
+            isValid = false;
+        } else if (firstName.toLowerCase() === lastName.toLowerCase()) {
+            showError('lastNameError', 'First name and last name cannot be the same');
+            isValid = false;
+        }
+
+        // Validate Phone Number (format: (ddd)ddd-dddd)
+        const phoneRegex = /^\(\d{3}\)\d{3}-\d{4}$/;
+        if (!phone) {
+            showError('phoneError', 'Phone number is required');
+            isValid = false;
+        } else if (!phoneRegex.test(phone)) {
+            showError('phoneError', 'Phone must be in format (ddd)ddd-dddd');
+            isValid = false;
+        }
+
+        // Validate Gender
+        if (!gender) {
+            showError('genderError', 'Please select a gender');
+            isValid = false;
+        }
+
+        // Validate Email (must contain @ and .)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+            showError('emailError', 'Email address is required');
+            isValid = false;
+        } else if (!emailRegex.test(email)) {
+            showError('emailError', 'Email must contain @ and . in valid format');
+            isValid = false;
+        }
+
+        // Validate Comment (minimum 10 characters)
+        if (!comment) {
+            showError('commentError', 'Comment is required');
+            isValid = false;
+        } else if (comment.length < 10) {
+            showError('commentError', 'Comment must be at least 10 characters');
+            isValid = false;
+        }
+
+        // If all validations pass, show success message and store in JSON
+        if (isValid) {
+            // Store contact data
+            const contactData = {
+                firstName: firstName,
+                lastName: lastName,
+                phone: phone,
+                gender: gender.value,
+                email: email,
+                comment: comment,
+                timestamp: new Date().toISOString()
+            };
+
+            // Call API instead of localStorage
+            saveContact(contactData).then(result => {
+                if (result.success) {
+                    const successMessage = document.getElementById('successMessage');
+                    const submittedData = document.getElementById('submittedData');
+
+                    submittedData.innerHTML = `
+                        <strong>Name:</strong> ${firstName} ${lastName}<br>
+                        <strong>Phone:</strong> ${phone}<br>
+                        <strong>Gender:</strong> ${gender.value}<br>
+                        <strong>Email:</strong> ${email}<br>
+                        <strong>Comment:</strong> ${comment}<br>
+                        <strong>Contact ID:</strong> ${result.contact.contactId}
+                    `;
+
+                    successMessage.classList.add('show');
+                    document.getElementById('contactForm').reset();
+                }
+            });
+        }
+    });
+
+    function showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+    }
+</script>
+</body>
+</html>
