@@ -1,0 +1,175 @@
+[
+  {
+    "bookingId": "BK176455486487511",
+    "bookingNumber": "BKN-1764554864875",
+    "userId": "USER1534",
+    "bookingDate": "2025-12-01T02:07:44.875Z",
+    "status": "confirmed",
+    "type": "car",
+    "carId": "C002",
+    "city": "Dallas",
+    "carType": "SUV",
+    "pickUpDate": "2024-09-10",
+    "dropOffDate": "2024-09-15",
+    "pricePerDay": 75
+  },
+  {
+    "bookingId": "BK1764555163845141",
+    "bookingNumber": "BKN-1764555163845",
+    "userId": "USER4759",
+    "bookingDate": "2025-12-01T02:12:43.845Z",
+    "status": "confirmed",
+    "type": "flight",
+    "tripType": "oneway",
+    "flightId": "FL001",
+    "origin": "Dallas",
+    "destination": "Los Angeles",
+    "departDate": "2024-09-01",
+    "departureTime": "06:00",
+    "arrivalTime": "08:30",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "price": 299.99,
+    "passengers": [
+      {
+        "firstName": "John",
+        "lastName": "Smith",
+        "dateOfBirth": "1990-11-05",
+        "ssn": "234-32-4232"
+      }
+    ]
+  },
+  {
+    "bookingId": "BK1764555245827823",
+    "bookingNumber": "BKN-1764555245827",
+    "userId": "USER9515",
+    "bookingDate": "2025-12-01T02:14:05.827Z",
+    "status": "confirmed",
+    "type": "flight",
+    "tripType": "oneway",
+    "flightId": "FL001",
+    "origin": "Dallas",
+    "destination": "Los Angeles",
+    "departDate": "2024-09-01",
+    "departureTime": "06:00",
+    "arrivalTime": "08:30",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "price": 299.99,
+    "passengers": [
+      {
+        "firstName": "AAa",
+        "lastName": "A",
+        "dateOfBirth": "0111-11-11",
+        "ssn": "111-11-1111"
+      }
+    ]
+  },
+  {
+    "bookingId": "BK1764555290011560",
+    "bookingNumber": "BKN-1764555290011",
+    "userId": "USER4259",
+    "bookingDate": "2025-12-01T02:14:50.011Z",
+    "status": "confirmed",
+    "type": "flight",
+    "tripType": "roundtrip",
+    "departingFlight": {
+      "flightId": "FL003",
+      "origin": "Houston",
+      "destination": "San Francisco",
+      "departDate": "2024-09-03",
+      "departureTime": "07:30",
+      "arrivalTime": "10:00"
+    },
+    "returningFlight": {
+      "flightId": "FL004",
+      "origin": "San Francisco",
+      "destination": "Houston",
+      "departDate": "2024-09-03",
+      "departureTime": "11:30",
+      "arrivalTime": "17:15"
+    },
+    "origin": "Houston",
+    "destination": "San Francisco",
+    "departDate": "2024-09-03",
+    "returnDate": "2024-09-03",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "price": 640,
+    "passengers": [
+      {
+        "firstName": "John",
+        "lastName": "A",
+        "dateOfBirth": "1231-12-31",
+        "ssn": "123-12-3123"
+      }
+    ]
+  },
+  {
+    "bookingId": "BK1764555320518940",
+    "bookingNumber": "BKN-1764555320518",
+    "userId": "USER2277",
+    "bookingDate": "2025-12-01T02:15:20.518Z",
+    "status": "confirmed",
+    "type": "hotel",
+    "hotelId": "H001",
+    "hotelName": "Grand Plaza Hotel Dallas",
+    "city": "Dallas",
+    "checkIn": "2024-09-01",
+    "checkOut": "2024-09-15",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "rooms": 1,
+    "pricePerNight": 150
+  },
+  {
+    "bookingId": "BK1764555343662387",
+    "bookingNumber": "BKN-1764555343662",
+    "userId": "USER5377",
+    "bookingDate": "2025-12-01T02:15:43.662Z",
+    "status": "confirmed",
+    "type": "hotel",
+    "hotelId": "H001",
+    "hotelName": "Grand Plaza Hotel Dallas",
+    "city": "Dallas",
+    "checkIn": "2024-09-01",
+    "checkOut": "2024-09-15",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "rooms": 1,
+    "pricePerNight": 150
+  },
+  {
+    "bookingId": "BK1764555374762599",
+    "bookingNumber": "BKN-1764555374762",
+    "userId": "USER5182",
+    "bookingDate": "2025-12-01T02:16:14.762Z",
+    "status": "confirmed",
+    "type": "car",
+    "carId": "C002",
+    "city": "Dallas",
+    "carType": "SUV",
+    "pickUpDate": "2024-09-12",
+    "dropOffDate": "2024-09-15",
+    "pricePerDay": 75
+  },
+  {
+    "bookingId": "BK1764555434771335",
+    "bookingNumber": "BKN-1764555434771",
+    "userId": "USER3845",
+    "bookingDate": "2025-12-01T02:17:14.771Z",
+    "status": "confirmed",
+    "type": "car",
+    "carId": "C002",
+    "city": "Dallas",
+    "carType": "SUV",
+    "pickUpDate": "2024-09-01",
+    "dropOffDate": "2024-09-05",
+    "pricePerDay": 75
+  }
+]

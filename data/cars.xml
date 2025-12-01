@@ -15,7 +15,7 @@
     <check-in-date>2024-09-01</check-in-date>
     <check-out-date>2024-12-01</check-out-date>
     <price-per-day>75.00</price-per-day>
-  </car>
+  <available>false</available></car>
   <car>
     <car-id>C003</car-id>
     <city>Los Angeles</city>

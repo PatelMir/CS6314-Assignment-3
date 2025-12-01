@@ -1,11 +1,10 @@
-// Frontend API Helper - NO LOCALSTORAGE
-// All data is managed by the backend server
+// Frontend API Helper
+// Cart data persists in sessionStorage (cleared when browser tab closes)
 
 const API_URL = 'http://localhost:3000/api';
 
-// Session cart stored in memory only (cleared on page refresh)
-// For persistence, we'd need to implement user sessions on backend
-let sessionCart = [];
+// Cart storage key
+const CART_KEY = 'travelDealsCart';
 
 // CONTACTS API
 async function saveContact(contactData) {
@@ -164,25 +163,42 @@ async function loadCars() {
     }
 }
 
-// CART API - MEMORY ONLY (NO LOCALSTORAGE)
-// Note: Cart is stored in memory and will be lost on page refresh
-// This is temporary until proper session management is implemented
+// CART API - Uses sessionStorage for persistence across page navigation
+// Cart is cleared when browser tab closes
 function getCart() {
-    return sessionCart;
+    try {
+        const cartData = sessionStorage.getItem(CART_KEY);
+        return cartData ? JSON.parse(cartData) : [];
+    } catch (error) {
+        console.error('Error reading cart:', error);
+        return [];
+    }
+}
+
+function saveCartToStorage(cart) {
+    try {
+        sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch (error) {
+        console.error('Error saving cart:', error);
+    }
 }
 
 function addToCart(item) {
-    sessionCart.push(item);
+    const cart = getCart();
+    cart.push(item);
+    saveCartToStorage(cart);
     alert('Item added to cart!');
     window.location.href = '/cart';
 }
 
 function clearCart() {
-    sessionCart = [];
+    sessionStorage.removeItem(CART_KEY);
 }
 
 function removeFromCart(index) {
-    sessionCart.splice(index, 1);
+    const cart = getCart();
+    cart.splice(index, 1);
+    saveCartToStorage(cart);
 }
 
 // Connection test
